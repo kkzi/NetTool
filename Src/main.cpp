@@ -13,8 +13,9 @@ int main(int argc, char** argv)
 
     Form w;
     w.setStyleSheet(R"(
-*{font:normal 14px "Microsoft Yahei";}
+*{font:normal 12px "Microsoft Yahei";}
 QFrame{background-color:#fff;outline:none;}
+QLabel#title{font-size:16px;font-weight:bold;}
         )");
     w.show();
     return a.exec();

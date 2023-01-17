@@ -20,4 +20,6 @@ moc_files([
     'Src/Form.h',
     'Src/RecvWidget.h',
     'Src/SendWidget.h',
+    'Src/NetworkTask.h',
+    'Src/RemoteHostWidget.h',
 ])

@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required (VERSION 3.8)
-project ("CMakeProject1")
+project ("NetTool")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -19,11 +19,13 @@ set(QT_DIR C:/Qt/4.3.5)
 set(QT_QMAKE_EXECUTABLE ${QT_DIR}/bin/qmake.exe)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-find_package(Qt4 REQUIRED QtGui) 
+find_package(Qt4 COMPONENTS QtGui) 
+
+set(BOOST_DIR D:/Local/boost_1_80_0)
 
 
-include_directories(${QT_DIR}/include ${QT_DIR}/include/QtGui)
+include_directories(${BOOST_DIR} ${QT_DIR}/include ${QT_DIR}/include/QtCore ${QT_DIR}/include/QtGui)
 target_link_directories(demo PRIVATE ${QT_DIR}/lib)
-#target_link_libraries(demo PRIVATE QtGuid QtCored)
-target_link_libraries(demo PRIVATE QtGui QtCore)
-target_link_libraries(demo PRIVATE qtmaind Imm32 Winmm Ws2_32)
+target_link_libraries(demo PRIVATE QtGuid QtCored QtNetwork qtmaind )
+#target_link_libraries(demo PRIVATE QtGui QtCore qtmain)
+target_link_libraries(demo PRIVATE Imm32 Winmm Ws2_32)

@@ -1,26 +1,31 @@
 #include "Form.h"
-#include "SideBar.h"
-#include "SendWidget.h"
+#include "MulticastConfigWidget.h"
+#include "MulticastTask.h"
 #include "RecvWidget.h"
+#include "RemoteHostWidget.h"
+#include "SendWidget.h"
+#include "SideBar.h"
+#include "TcpClientTask.h"
+#include "TcpServerTask.h"
+#include "UdpTask.h"
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QStatusBar>
-
 
 Form::Form()
     : side_(new SideBar(this))
 {
     setupUi();
 
-    side_->registerProto("TCP Server", new QLabel("todo"));
-    side_->registerProto("TCP Client", new QLabel("todo"));
-    side_->registerProto("UDP", new QLabel("todo"));
-    side_->registerProto("Multicast", new QLabel("todo1"));
+    side_->registerProto<TcpServerTask, QWidget>("TCP Server");
+    side_->registerProto<TcpClientTask, RemoteHostWidget>("TCP Client");
+    side_->registerProto<UdpTask, RemoteHostWidget>("UDP");
+    side_->registerProto<MulticastTask, MulticastConfigWidget>("Multicast");
 }
 
 void Form::setupUi()
 {
-    side_->setMinimumWidth(150);
+    side_->setMinimumWidth(180);
     side_->setMaximumWidth(400);
 
     auto central = new QFrame;
