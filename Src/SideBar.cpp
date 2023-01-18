@@ -1,17 +1,18 @@
 #include "SideBar.h"
-#include "NetUtil.h"
 #include "CommonUi.h"
+#include "NetUtil.h"
 #include "NetworkTask.h"
-#include <QVBoxLayout>
+#include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QPushButton>
-#include <QComboBox>
-#include <QStackedWidget>
 #include <QMetaObject>
+#include <QPushButton>
+#include <QStackedWidget>
+#include <QVBoxLayout>
 
-SideBar::SideBar(QWidget* parent)
+SideBar::SideBar(QWidget *parent)
     : QWidget(parent)
+    , io_(1)
     , form_(new QWidget)
     , proto_(new QComboBox(this))
     , localIp_(new QComboBox(this))
@@ -50,7 +51,6 @@ void SideBar::setupUi()
     connect(start_, SIGNAL(clicked(bool)), this, SLOT(ctrlNetworkTask(bool)));
 }
 
-
 void SideBar::startNewNetworkTask()
 {
     Q_ASSERT(current_ == nullptr);
@@ -59,18 +59,27 @@ void SideBar::startNewNetworkTask()
 
     auto task = NetworkTaskFactory::create(proto_->currentText());
     Q_CHECK_PTR(task);
-    task->start();
+    task->setConfig(nc);
+    task->start(io_);
     current_ = task;
-}
 
+    thread_ = std::thread([this] {
+        io_.run();
+    });
+}
 
 void SideBar::stopCurrentNetworkTask()
 {
+    io_.stop();
+    if (thread_.joinable())
+    {
+        thread_.join();
+    }
+
     Q_CHECK_PTR(current_);
     delete current_;
     current_ = nullptr;
 }
-
 
 NetworkConfig SideBar::gatherConfig() const
 {
@@ -80,7 +89,7 @@ NetworkConfig SideBar::gatherConfig() const
     nc.localPort = localPort_->text().toInt();
 
     auto detail = protoDetail_->currentWidget();
-    QMetaObject::invokeMethod(detail, "updateConfig", Qt::DirectConnection, Q_ARG(NetworkConfig&, nc));
+    QMetaObject::invokeMethod(detail, "updateConfig", Qt::DirectConnection, Q_ARG(NetworkConfig &, nc));
     return nc;
 }
 

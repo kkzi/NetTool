@@ -2,7 +2,7 @@
 
 
 
-void MulticastTask::start()
+void MulticastTask::start(io_context &io)
 {
 }
 

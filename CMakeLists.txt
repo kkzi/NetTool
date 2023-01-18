@@ -8,7 +8,7 @@ if(WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
 endif()
 
-add_definitions(-DFMT_HEADER_ONLY)
+add_definitions(-DFMT_HEADER_ONLY -D_WIN32_WINNT=0x0601)
 
 file(GLOB_RECURSE SRCS Src/*.h Src/*.cpp)
 file(GLOB_RECURSE MOC_FILES out/moc/*.cpp)

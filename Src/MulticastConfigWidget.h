@@ -2,8 +2,8 @@
 
 #include <QWidget>
 
-struct NetworkConfig;
 class QLineEdit;
+struct NetworkConfig;
 
 class MulticastConfigWidget : public QWidget
 {

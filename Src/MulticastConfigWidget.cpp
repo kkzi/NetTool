@@ -1,6 +1,7 @@
 #include "MulticastConfigWidget.h"
 #include "CommonUi.h"
 #include "NetworkConfig.h"
+#include "NetworkTask.h"
 #include <QLineEdit>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -19,3 +20,4 @@ void MulticastConfigWidget::updateConfig(NetworkConfig &nc)
 {
     nc.multicastIp = multicastAddr_->text();
 }
+

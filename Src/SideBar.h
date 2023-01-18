@@ -6,7 +6,9 @@
 #include <QMap>
 #include <QStackedWidget>
 #include <QWidget>
+#include <boost/asio/io_context.hpp>
 #include <functional>
+#include <thread>
 
 class QLineEdit;
 class QPushButton;
@@ -45,5 +47,7 @@ private:
     QStackedWidget *protoDetail_;
     QPushButton *start_;
 
+    boost::asio::io_context io_;
+    std::thread thread_;
     NetworkTask *current_{ nullptr };
 };

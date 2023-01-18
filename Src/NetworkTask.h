@@ -2,28 +2,30 @@
 
 #include "NetworkConfig.h"
 #include <QObject>
+#include <boost/asio/io_context.hpp>
+
+using namespace boost::asio;
 
 class NetworkTask : public QObject
 {
     Q_OBJECT
 
 public:
-    virtual ~NetworkTask() {};
+    virtual ~NetworkTask(){};
 
 public:
-    void setConfig(const NetworkConfig& cfg)
+    void setConfig(const NetworkConfig &cfg)
     {
         cfg_ = cfg;
     }
 
 public:
-    virtual void start() = 0;
-    virtual void send(const QByteArray&) = 0;
+    virtual void start(io_context &io) = 0;
+    virtual void send(const QByteArray &) = 0;
 
 signals:
-    void dataReceived(const QByteArray&);
+    void dataReceived(const QByteArray &);
 
-private:
+protected:
     NetworkConfig cfg_;
 };
-

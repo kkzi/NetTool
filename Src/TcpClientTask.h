@@ -6,7 +6,7 @@ class TcpClientTask : public NetworkTask
 {
 
 public:
-    void start() override;
+    void start(io_context &io) override;
     void send(const QByteArray&) override;
 };
 

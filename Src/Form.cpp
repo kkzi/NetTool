@@ -7,6 +7,7 @@
 #include "SideBar.h"
 #include "TcpClientTask.h"
 #include "TcpServerTask.h"
+#include "TcpSessionWidget.h"
 #include "UdpTask.h"
 #include <QHBoxLayout>
 #include <QLabel>
@@ -17,7 +18,7 @@ Form::Form()
 {
     setupUi();
 
-    side_->registerProto<TcpServerTask, QWidget>("TCP Server");
+    side_->registerProto<TcpServerTask, TcpSessionWidget>("TCP Server");
     side_->registerProto<TcpClientTask, RemoteHostWidget>("TCP Client");
     side_->registerProto<UdpTask, RemoteHostWidget>("UDP");
     side_->registerProto<MulticastTask, MulticastConfigWidget>("Multicast");
