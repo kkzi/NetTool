@@ -11,7 +11,7 @@ class RemoteHostWidget : public QWidget
 public:
     RemoteHostWidget(QWidget *parent = nullptr);
 
-public:
+public slots:
     void updateConfig(NetworkConfig &nc);
 
 private:

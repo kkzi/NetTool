@@ -1,10 +1,18 @@
 #include "SideBar.h"
 #include "CommonUi.h"
+#include "MulticastConfigWidget.h"
+#include "MulticastTask.h"
 #include "NetUtil.h"
 #include "NetworkTask.h"
+#include "RemoteHostWidget.h"
+#include "TcpClientTask.h"
+#include "TcpServerTask.h"
+#include "TcpSessionWidget.h"
+#include "UdpTask.h"
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QMetaObject>
 #include <QPushButton>
 #include <QStackedWidget>
@@ -12,21 +20,26 @@
 
 SideBar::SideBar(QWidget *parent)
     : QWidget(parent)
-    , io_(1)
     , form_(new QWidget)
     , proto_(new QComboBox(this))
     , localIp_(new QComboBox(this))
-    , localPort_(new QLineEdit(this))
+    , localPort_(new QLineEdit("44441", this))
     , protoDetail_(new QStackedWidget(this))
     , start_(new QPushButton("开始", this))
 {
     qRegisterMetaType<NetworkConfig>("NetworkConfig");
 
-    start_->setFixedWidth(80);
-    start_->setCheckable(true);
     setupUi();
 
+    start_->setFixedWidth(80);
+    start_->setCheckable(true);
+
+    localIp_->addItem("0.0.0.0");
     localIp_->addItems(getLocalIpAddress());
+    registerProto<TcpServerTask, TcpSessionWidget>("TCP Server");
+    registerProto<TcpClientTask, RemoteHostWidget>("TCP Client");
+    registerProto<UdpTask, RemoteHostWidget>("UDP");
+    registerProto<MulticastTask, MulticastConfigWidget>("UDP Multicast");
 }
 
 void SideBar::setupUi()
@@ -53,57 +66,53 @@ void SideBar::setupUi()
 
 void SideBar::startNewNetworkTask()
 {
-    Q_ASSERT(current_ == nullptr);
-
-    auto nc = gatherConfig();
-
-    auto task = NetworkTaskFactory::create(proto_->currentText());
+    auto detail = protoDetail_->currentWidget();
+    auto nc = gatherConfig(detail);
+    auto task = NetworkTaskManager::instance()->start(proto_->currentText(), nc);
     Q_CHECK_PTR(task);
-    task->setConfig(nc);
-    task->start(io_);
-    current_ = task;
-
-    thread_ = std::thread([this] {
-        io_.run();
-    });
+    QMetaObject::invokeMethod(detail, "onTaskStarted", Qt::DirectConnection);
 }
 
 void SideBar::stopCurrentNetworkTask()
 {
-    io_.stop();
-    if (thread_.joinable())
-    {
-        thread_.join();
-    }
+    auto detail = protoDetail_->currentWidget();
+    QMetaObject::invokeMethod(detail, "onTaskStopped", Qt::DirectConnection);
 
-    Q_CHECK_PTR(current_);
-    delete current_;
-    current_ = nullptr;
+    NetworkTaskManager::instance()->stopCurrent();
 }
 
-NetworkConfig SideBar::gatherConfig() const
+NetworkConfig SideBar::gatherConfig(QWidget *detail) const
 {
     NetworkConfig nc;
     nc.protocol = proto_->currentText();
     nc.localIp = localIp_->currentText();
     nc.localPort = localPort_->text().toInt();
 
-    auto detail = protoDetail_->currentWidget();
     QMetaObject::invokeMethod(detail, "updateConfig", Qt::DirectConnection, Q_ARG(NetworkConfig &, nc));
     return nc;
 }
 
 void SideBar::ctrlNetworkTask(bool checked)
 {
-    form_->setDisabled(checked);
     if (checked)
     {
-        startNewNetworkTask();
-        start_->setText("停止");
+        try
+        {
+            form_->setDisabled(true);
+            startNewNetworkTask();
+            start_->setText("停止");
+        }
+        catch (const std::exception &e)
+        {
+            QMessageBox::critical(nullptr, "错误", QString::fromStdString(e.what()));
+            form_->setEnabled(true);
+            return;
+        }
     }
     else
     {
         stopCurrentNetworkTask();
         start_->setText("开始");
+        form_->setEnabled(true);
     }
 }

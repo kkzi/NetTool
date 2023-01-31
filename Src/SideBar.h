@@ -1,7 +1,7 @@
 #pragma once
 
-#include "NetwokTaskFactory.h"
 #include "NetworkConfig.h"
+#include "NetworkTaskManager.h"
 #include <QComboBox>
 #include <QMap>
 #include <QStackedWidget>
@@ -25,7 +25,7 @@ public:
     template <class T, class W>
     void registerProto(QString name)
     {
-        NetworkTaskFactory::registar<T>(name);
+        NetworkTaskManager::instance()->registar<T>(name);
         proto_->addItem(name);
         protoDetail_->addWidget(new W(this));
     }
@@ -34,7 +34,7 @@ private:
     void setupUi();
     void startNewNetworkTask();
     void stopCurrentNetworkTask();
-    NetworkConfig gatherConfig() const;
+    NetworkConfig gatherConfig(QWidget *detail) const;
 
 private slots:
     void ctrlNetworkTask(bool);
@@ -46,8 +46,4 @@ private:
     QLineEdit *localPort_;
     QStackedWidget *protoDetail_;
     QPushButton *start_;
-
-    boost::asio::io_context io_;
-    std::thread thread_;
-    NetworkTask *current_{ nullptr };
 };

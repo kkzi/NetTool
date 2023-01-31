@@ -12,6 +12,13 @@ RemoteHostWidget::RemoteHostWidget(QWidget *parent /*= nullptr*/)
     , remoteIp_(new QLineEdit)
     , remotePort_(new QLineEdit)
 {
+
+    /// todo for test
+    remoteIp_->setText("127.0.0.1");
+    remotePort_->setText("33001");
+    ///
+
+
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 

@@ -7,10 +7,11 @@ struct NetworkConfig;
 
 class MulticastConfigWidget : public QWidget
 {
+    Q_OBJECT
 public:
     MulticastConfigWidget(QWidget *parent = nullptr);
 
-public:
+public slots:
     void updateConfig(NetworkConfig &nc);
 
 private:
