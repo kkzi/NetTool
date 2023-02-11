@@ -10,7 +10,8 @@ public:
     ~MulticastTask();
 
 public:
-    Result start(io_context &io) override;
+    void doStart(io_context &io) override;
+    void doStop() override;
     void send(const QByteArray &) override;
 
 private:

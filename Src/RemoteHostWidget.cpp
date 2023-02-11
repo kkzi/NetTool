@@ -18,12 +18,11 @@ RemoteHostWidget::RemoteHostWidget(QWidget *parent /*= nullptr*/)
     remotePort_->setText("33001");
     ///
 
-
-    auto layout = new QVBoxLayout(this);
+    auto layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    layout->addLayout(makeFormRow("目的地址", remoteIp_));
-    layout->addLayout(makeFormRow("目的端口", remotePort_));
+    layout->addLayout(makeLabeledField(tr("Remote IP"), remoteIp_));
+    layout->addLayout(makeLabeledField(tr("Remote Port"), remotePort_, 60));
     layout->addStretch();
 }
 

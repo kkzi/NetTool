@@ -1,4 +1,6 @@
 #include "TcpClientTask.h"
+#include "socket_timeout_option.h"
+#include <QEventLoop>
 #include <boost/asio/write.hpp>
 
 using namespace boost::asio;
@@ -6,16 +8,10 @@ using namespace boost::asio::ip;
 
 TcpClientTask::~TcpClientTask()
 {
-    if (sock_ != nullptr)
-    {
-        sock_->close();
-        sock_.reset();
-    }
 }
 
-Result TcpClientTask::start(io_context &io)
+void TcpClientTask::doStart(io_context &io)
 {
-    buffer_.resize(4096, 0);
     peer_ = QString("%1:%2").arg(cfg_.remoteIp).arg(cfg_.remotePort);
 
     tcp::endpoint local(address::from_string(cfg_.localIp.toStdString()), cfg_.localPort);
@@ -24,19 +20,35 @@ Result TcpClientTask::start(io_context &io)
     sock_->open(tcp::v4());
     // sock_->bind(tcp::endpoint(tcp::v4(), 0));
     sock_->bind(local);
-    sock_->async_connect(remote, [this](auto &&ec) {
+    sock_->set_option(send_timeout_option(3));
+    auto addr = QString("%1:%2").arg(cfg_.remoteIp).arg(cfg_.remotePort);
+    sock_->async_connect(remote, [this, addr](auto &&ec) {
+        if (stopped_)
+        {
+            return;
+        }
         if (ec)
         {
-            emit logMessage(QString("连接TCP服务器%1:%2失败").arg(cfg_.remoteIp).arg(cfg_.remotePort));
+            emit logMessage(QString("连接TCP服务器%1失败").arg(addr));
             sock_->close();
         }
         else
         {
-            emit logMessage(QString("连接TCP服务器%1:%2成功").arg(cfg_.remoteIp).arg(cfg_.remotePort));
+            emit logMessage(QString("连接TCP服务器%1成功").arg(addr));
             doRead();
         }
+        emit workStateChanged(ec ? NetworkTask::FAILED : NetworkTask::OK);
     });
-    return std::make_tuple(true, "");
+}
+
+void TcpClientTask::doStop()
+{
+    stopped_ = true;
+    if (sock_ != nullptr)
+    {
+        sock_->close();
+        sock_.reset();
+    }
 }
 
 void TcpClientTask::send(const QByteArray &data)
@@ -45,6 +57,10 @@ void TcpClientTask::send(const QByteArray &data)
     buffer_.resize(data.size());
     std::copy(data.begin(), data.end(), buffer_.begin());
     boost::asio::async_write(*sock_, buffer(buffer_), [this](auto &&ec, auto &&len) {
+        if (stopped_)
+        {
+            return;
+        }
         if (ec)
         {
             emit logMessage(QString("向TCP服务器%1发送数据失败").arg(peer_));
@@ -58,7 +74,13 @@ void TcpClientTask::send(const QByteArray &data)
 
 void TcpClientTask::doRead()
 {
+    buffer_.resize(4096, 0);
     sock_->async_read_some(buffer(buffer_), [this](auto &&ec, auto &&len) {
+        if (stopped_)
+        {
+            return;
+        }
+
         if (ec)
         {
             sock_->close();

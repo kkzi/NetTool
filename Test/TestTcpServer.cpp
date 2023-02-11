@@ -8,7 +8,5 @@ int main(int argc, char **argv)
     conf.localPort = 44441;
     TcpServerTask task;
     task.setConfig(conf);
-    boost::asio::io_context io;
-    task.start(io);
-    io.run();
+    task.start();
 }

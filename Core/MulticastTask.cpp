@@ -7,29 +7,28 @@ using namespace boost::asio::ip;
 
 MulticastTask::~MulticastTask()
 {
-    //if (send_ != nullptr && send_->is_open())
+    // if (send_ != nullptr && send_->is_open())
     //{
     //    send_->close();
     //}
-    //if (recv_ != nullptr && recv_->is_open())
+    // if (recv_ != nullptr && recv_->is_open())
     //{
     //    recv_->close();
     //}
-    //buffer_.clear();
+    // buffer_.clear();
 }
 
-Result MulticastTask::start(io_context &io)
+void MulticastTask::doStart(io_context &io)
 {
     if (cfg_.localPort == 0 || cfg_.localPort > 0xFFFF)
     {
-        return std::make_tuple(false, QString("端口%1错误").arg(cfg_.localPort));
+        throw std::logic_error(std::format("端口{}错误", cfg_.localPort));
     }
     if (cfg_.multicastIp.isEmpty())
     {
-        return std::make_tuple(false, QString("组播地址不能为空").arg(cfg_.localPort));
+        throw std::logic_error(std::string("组播地址不能为空"));
     }
     /// todo 检查组播IP地址
-    recvBuffer_.resize(4096, 0);
     group_ = QString("%1:%2").arg(cfg_.remoteIp).arg(cfg_.remotePort);
     groupEndpoint_ = udp::endpoint(address::from_string(cfg_.multicastIp.toStdString()), cfg_.localPort);
 
@@ -46,7 +45,11 @@ Result MulticastTask::start(io_context &io)
 
     doRead();
 
-    return std::make_tuple(true, "");
+    emit workStateChanged(OK);
+}
+
+void MulticastTask::doStop()
+{
 }
 
 void MulticastTask::send(const QByteArray &data)

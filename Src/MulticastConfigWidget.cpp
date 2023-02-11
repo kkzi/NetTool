@@ -10,9 +10,9 @@ MulticastConfigWidget::MulticastConfigWidget(QWidget *parent /*= nullptr*/)
     : QWidget(parent)
     , multicastAddr_(new QLineEdit)
 {
-    auto layout = new QVBoxLayout(this);
+    auto layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->addLayout(makeFormRow("×é²¥µØÖ·", multicastAddr_));
+    layout->addLayout(makeLabeledField(tr("Multicast IP"), multicastAddr_));
     layout->addStretch();
 }
 

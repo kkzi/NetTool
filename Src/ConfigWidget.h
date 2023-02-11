@@ -1,11 +1,11 @@
 #pragma once
 
+#include "TitledWidget.h"
 #include "NetworkConfig.h"
 #include "NetworkTaskManager.h"
 #include <QComboBox>
 #include <QMap>
 #include <QStackedWidget>
-#include <QWidget>
 #include <boost/asio/io_context.hpp>
 #include <functional>
 #include <thread>
@@ -14,12 +14,12 @@ class QLineEdit;
 class QPushButton;
 class NetworkTask;
 
-class SideBar : public QWidget
+class ConfigWidget : public TitledWidget
 {
     Q_OBJECT
 
 public:
-    SideBar(QWidget *parent);
+    ConfigWidget(QWidget *parent);
 
 public:
     template <class T, class W>
@@ -38,12 +38,13 @@ private:
 
 private slots:
     void ctrlNetworkTask(bool);
+    void updateCtrlButtons(int);
 
 private:
-    QWidget *form_;
     QComboBox *proto_;
     QComboBox *localIp_;
     QLineEdit *localPort_;
     QStackedWidget *protoDetail_;
+    QWidget *form_;
     QPushButton *start_;
 };

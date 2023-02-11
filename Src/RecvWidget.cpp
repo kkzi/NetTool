@@ -20,20 +20,15 @@
 #include <QVBoxLayout>
 
 RecvWidget::RecvWidget(QWidget *parent)
-    : QFrame(parent)
-    , recvEdit_(new QTextEdit(this))
+    : TitledWidget(tr("Recive Information"), new QFrame, recvEdit_ = new QTextEdit, parent)
     , mode_(new QComboBox(this))
     , filePath_(new ClickableLabel(this))
-    , bufferLimit_(new QLineEdit(this))
     , timer_(new QTimer(this))
 {
-    bufferLimit_->setText("1000");
-    bufferLimit_->setAlignment(Qt::AlignCenter);
-    bufferLimit_->setFixedWidth(50);
     recvEdit_->setReadOnly(true);
-    mode_->addItems(QStringList::fromStdList({ "文本", "十六进制", "文件" }));
+    mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex"), tr("File") }));
 
-    timer_->setSingleShot(false);
+    timer_->setSingleShot(true);
     connect(mode_, SIGNAL(currentIndexChanged(int)), this, SLOT(showModeDetail(int)));
     connect(filePath_, SIGNAL(mouseLeftButtonClicked()), this, SLOT(openStoreFilePath()));
     connect(filePath_, SIGNAL(mouseRightButtonClicked()), this, SLOT(openStoreDir()));
@@ -58,60 +53,27 @@ QString RecvWidget::storageFilePath() const
 
 void RecvWidget::append(const QString &from, const QByteArray &data)
 {
-    auto have = buffer_.size();
-    auto come = data.size();
-    auto capa = bufferLimit_->text().toInt();
-
-    if (come >= capa)
-    {
-        buffer_.clear();
-        buffer_ = data.right(capa);
-    }
-    else
-    {
-        if (auto len = come + have - capa; len > 0)
-        {
-            buffer_.remove(0, len);
-        }
-        buffer_.append(data);
-    }
-    if (!timer_->isActive())
-    {
-        timer_->start(250);
-    }
+    buffer_.append(data);
+    timer_->start(250);
 }
 
 void RecvWidget::setupUi()
 {
-    auto ctrl = new QHBoxLayout;
+    auto cornerLayout = new QHBoxLayout(corner_);
+    cornerLayout->setContentsMargins(0, 0, 0, 0);
+    cornerLayout->addWidget(mode_);
     {
-        auto title = new QLabel("接收信息");
-        title->setObjectName("title");
-        ctrl->addWidget(title);
-    }
-    {
-        ctrl->addWidget(new QLabel("缓冲区大小"));
-        ctrl->addWidget(bufferLimit_);
-        ctrl->addWidget(new QLabel("字节"));
-    }
-    ctrl->addSpacing(16);
-    ctrl->addWidget(mode_);
-    {
-        ctrl->addWidget(filePath_);
+        cornerLayout->addWidget(filePath_);
         filePath_->hide();
     }
 
-    ctrl->addStretch(1);
+    cornerLayout->addStretch(1);
     {
-        auto cleanBtn = new QPushButton("清空");
-        ctrl->addWidget(cleanBtn);
+        auto cleanBtn = new QPushButton(tr("CLEAR"));
+        cornerLayout->addWidget(cleanBtn);
         connect(cleanBtn, SIGNAL(clicked()), recvEdit_, SLOT(clear()));
         connect(cleanBtn, SIGNAL(clicked()), this, SLOT(cleanBuffer()));
     }
-
-    auto layout = new QVBoxLayout(this);
-    layout->addLayout(ctrl);
-    layout->addWidget(recvEdit_, 1);
 }
 
 void RecvWidget::updateBufferDisplay()

@@ -17,7 +17,13 @@ struct TcpSession : public std::enable_shared_from_this<TcpSession>
     {
         auto ep = sock_.remote_endpoint();
         addr_ = QString("%1:%2").arg(ep.address().to_string().c_str()).arg(ep.port());
-        buffer_.resize(4096);
+    }
+
+    ~TcpSession()
+    {
+        stopped_ = true;
+        boost::system::error_code ec;
+        sock_.close(ec);
     }
 
     void start(std::function<void(char *, std::size_t len)> reader)
@@ -43,15 +49,21 @@ struct TcpSession : public std::enable_shared_from_this<TcpSession>
 private:
     void doRead(std::function<void(char *, std::size_t len)> reader)
     {
-        sock_.async_read_some(buffer(buffer_), [reader, this](auto &&ec, auto &&len) {
+        auto self(shared_from_this());
+        buffer_.resize(4095);
+        sock_.async_read_some(buffer(buffer_, buffer_.size()), [reader, self, this](auto &&ec, auto &&len) {
+            if (stopped_)
+            {
+                return;
+            }
             if (ec)
             {
-                drop_(shared_from_this());
+                drop_(self);
             }
             else
             {
                 reader(buffer_.data(), len);
-                doRead(reader);
+                self->doRead(reader);
             }
         });
     }
@@ -61,9 +73,13 @@ private:
         auto self(shared_from_this());
         boost::asio::async_write(sock_, boost::asio::buffer(queue_.front().data(), queue_.front().length()),
             [this, self](boost::system::error_code ec, std::size_t) {
+                if (stopped_)
+                {
+                    return;
+                }
                 if (ec)
                 {
-                    drop_(shared_from_this());
+                    drop_(self);
                 }
                 else
                 {
@@ -78,6 +94,7 @@ private:
 
 private:
     tcp::socket sock_;
+    bool stopped_{ false };
     QString addr_;
     std::function<void(std::shared_ptr<TcpSession>)> drop_;
     std::string buffer_;
@@ -89,12 +106,9 @@ private:
 /************************************************************************/
 TcpServerTask::~TcpServerTask()
 {
-    sessions_.clear();
-    acc_->cancel();
-    acc_->close();
 }
 
-Result TcpServerTask::start(boost::asio::io_context &io)
+void TcpServerTask::doStart(boost::asio::io_context &io)
 {
     Q_ASSERT(!cfg_.localIp.isEmpty());
     Q_ASSERT(cfg_.localPort > 0);
@@ -104,8 +118,15 @@ Result TcpServerTask::start(boost::asio::io_context &io)
     doAccept();
 
     emit logMessage(tr("A TCP server listening on %1:%2 is running").arg(cfg_.localIp).arg(cfg_.localPort));
+    emit workStateChanged(OK);
+}
 
-    return std::make_tuple(true, "");
+void TcpServerTask::doStop()
+{
+    stopped_ = true;
+    acc_->cancel();
+    acc_->close();
+    sessions_.clear();
 }
 
 void TcpServerTask::send(const QByteArray &data)
@@ -132,6 +153,10 @@ QStringList TcpServerTask::clients() const
 void TcpServerTask::startSession(boost::asio::ip::tcp::socket &&sock)
 {
     auto session = std::make_shared<TcpSession>(std::move(sock), [this](auto &&s) {
+        if (stopped_)
+        {
+            return;
+        }
         std::erase(sessions_, s);
         auto addr = this->clients();
         emit logMessage(tr("TCP connection disconnected from %1").arg(s->remoteAddress()));
@@ -142,6 +167,10 @@ void TcpServerTask::startSession(boost::asio::ip::tcp::socket &&sock)
     emit logMessage(tr("TCP connection established from %1").arg(from));
     sessions_.emplace_back(session);
     session->start([this, from](auto &&ptr, auto &&len) {
+        if (!stopped_)
+        {
+            return;
+        }
         if (len == 0)
         {
             return;
@@ -155,6 +184,10 @@ void TcpServerTask::startSession(boost::asio::ip::tcp::socket &&sock)
 void TcpServerTask::doAccept()
 {
     acc_->async_accept([this](auto &&ec, auto &&sock) {
+        if (stopped_)
+        {
+            return;
+        }
         if (!ec)
         {
             startSession(std::move(sock));

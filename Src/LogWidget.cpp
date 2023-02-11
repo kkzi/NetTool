@@ -6,9 +6,8 @@
 #include <QVBoxLayout>
 
 LogWidget::LogWidget(QWidget *parent /*= nullptr*/)
-    : QFrame(parent)
+    : TitledWidget(tr("Logs Information"), new QWidget, log_ = new QTextEdit, parent)
     , info_(new QLabel(this))
-    , log_(new QTextEdit(this))
 {
     setupUi();
     log_->setReadOnly(true);
@@ -25,22 +24,12 @@ void LogWidget::append(const QString &msg)
 
 void LogWidget::setupUi()
 {
-    auto top = new QHBoxLayout;
+    auto top = new QHBoxLayout(corner_);
     top->setContentsMargins(0, 0, 0, 0);
-    {
-        auto title = new QLabel("日志和统计信息");
-        title->setObjectName("title");
-        top->addWidget(title);
-        top->addStretch();
-        top->addWidget(info_);
-        top->addSpacing(10);
-        auto clearBtn = new QPushButton("清空");
-        top->addWidget(clearBtn);
-        connect(clearBtn, SIGNAL(clicked()), log_, SLOT(clear()));
-        connect(clearBtn, SIGNAL(clicked()), info_, SLOT(clear()));
-    }
-
-    auto layout = new QVBoxLayout(this);
-    layout->addLayout(top);
-    layout->addWidget(log_, 1);
+    top->addWidget(info_);
+    top->addSpacing(10);
+    auto clearBtn = new QPushButton(tr("CLEAR"));
+    top->addWidget(clearBtn);
+    connect(clearBtn, SIGNAL(clicked()), log_, SLOT(clear()));
+    connect(clearBtn, SIGNAL(clicked()), info_, SLOT(clear()));
 }

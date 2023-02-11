@@ -18,7 +18,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt4 COMPONENTS QtGui) 
 
 #set(BOOST_DIR D:/Local/boost_1_80_0)
-set(BOOST_DIR C:/Local/boost_1_80_0)
+set(BOOST_DIR C:/Local/boost_1_81_0)
 
 
 include_directories(Core)

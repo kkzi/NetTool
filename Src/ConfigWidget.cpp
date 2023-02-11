@@ -1,4 +1,4 @@
-#include "SideBar.h"
+#include "ConfigWidget.h"
 #include "CommonUi.h"
 #include "MulticastConfigWidget.h"
 #include "MulticastTask.h"
@@ -18,70 +18,72 @@
 #include <QStackedWidget>
 #include <QVBoxLayout>
 
-SideBar::SideBar(QWidget *parent)
-    : QWidget(parent)
-    , form_(new QWidget)
+ConfigWidget::ConfigWidget(QWidget *parent)
+    : TitledWidget(tr("Configurations"), start_ = new QPushButton(tr("START")), new QWidget, parent)
     , proto_(new QComboBox(this))
     , localIp_(new QComboBox(this))
     , localPort_(new QLineEdit("44441", this))
     , protoDetail_(new QStackedWidget(this))
-    , start_(new QPushButton("开始", this))
+    , form_(new QWidget)
 {
     qRegisterMetaType<NetworkConfig>("NetworkConfig");
 
-    setupUi();
-
-    start_->setFixedWidth(80);
+    start_->setObjectName("ctrl");
+    start_->setFixedSize(80, 32);
     start_->setCheckable(true);
 
     localIp_->addItem("0.0.0.0");
     localIp_->addItems(getLocalIpAddress());
-    registerProto<TcpServerTask, TcpSessionWidget>("TCP Server");
+    registerProto<TcpServerTask, QWidget>("TCP Server");
     registerProto<TcpClientTask, RemoteHostWidget>("TCP Client");
     registerProto<UdpTask, RemoteHostWidget>("UDP");
     registerProto<MulticastTask, MulticastConfigWidget>("UDP Multicast");
+
+    setupUi();
 }
 
-void SideBar::setupUi()
+void ConfigWidget::setupUi()
 {
-    auto form = new QVBoxLayout(form_);
-    form->setContentsMargins(0, 0, 0, 0);
-    {
-        auto logo = new QLabel("LOGO");
-        form->addWidget(logo);
-        form->addLayout(makeFormRow("协议类型", proto_));
-        form->addLayout(makeFormRow("本地地址", localIp_));
-        form->addLayout(makeFormRow("本地端口", localPort_));
-        form->addWidget(protoDetail_);
-    }
-
-    auto layout = new QVBoxLayout(this);
-    layout->addWidget(form_);
-    layout->addWidget(start_);
-    layout->addStretch(1);
+    auto row1 = new QHBoxLayout(central_);
+    row1->setContentsMargins(10, 10, 10, 10);
+    row1->addLayout(makeLabeledField(tr("Protocol"), proto_));
+    row1->addLayout(makeLabeledField(tr("Local IP"), localIp_));
+    row1->addLayout(makeLabeledField(tr("Local Port"), localPort_, 60));
+    row1->addWidget(protoDetail_);
+    row1->addStretch(1);
+    row1->addSpacing(20);
+    row1->addWidget(start_);
 
     connect(proto_, SIGNAL(currentIndexChanged(int)), protoDetail_, SLOT(setCurrentIndex(int)));
     connect(start_, SIGNAL(clicked(bool)), this, SLOT(ctrlNetworkTask(bool)));
 }
 
-void SideBar::startNewNetworkTask()
+void ConfigWidget::startNewNetworkTask()
 {
+    auto ntm = NetworkTaskManager::instance();
+
     auto detail = protoDetail_->currentWidget();
     auto nc = gatherConfig(detail);
-    auto task = NetworkTaskManager::instance()->start(proto_->currentText(), nc);
+    auto task = ntm->create(proto_->currentText(), nc);
+    connect(task, SIGNAL(workStateChanged(int)), this, SLOT(updateCtrlButtons(int)));
     Q_CHECK_PTR(task);
+    ntm->start(task);
+
     QMetaObject::invokeMethod(detail, "onTaskStarted", Qt::DirectConnection);
 }
 
-void SideBar::stopCurrentNetworkTask()
+void ConfigWidget::stopCurrentNetworkTask()
 {
     auto detail = protoDetail_->currentWidget();
     QMetaObject::invokeMethod(detail, "onTaskStopped", Qt::DirectConnection);
-
+    form_->setEnabled(true);
+    start_->setEnabled(true);
+    start_->setText(tr("START"));
+    start_->setChecked(false);
     NetworkTaskManager::instance()->stopCurrent();
 }
 
-NetworkConfig SideBar::gatherConfig(QWidget *detail) const
+NetworkConfig ConfigWidget::gatherConfig(QWidget *detail) const
 {
     NetworkConfig nc;
     nc.protocol = proto_->currentText();
@@ -92,27 +94,40 @@ NetworkConfig SideBar::gatherConfig(QWidget *detail) const
     return nc;
 }
 
-void SideBar::ctrlNetworkTask(bool checked)
+void ConfigWidget::ctrlNetworkTask(bool checked)
 {
+    form_->setDisabled(true);
+    start_->setDisabled(true);
+
     if (checked)
     {
         try
         {
-            form_->setDisabled(true);
             startNewNetworkTask();
-            start_->setText("停止");
         }
         catch (const std::exception &e)
         {
-            QMessageBox::critical(nullptr, "错误", QString::fromStdString(e.what()));
-            form_->setEnabled(true);
+            QMessageBox::critical(nullptr, tr("Error"), QString::fromStdString(e.what()));
+            updateCtrlButtons(NetworkTask::FAILED);
             return;
         }
     }
     else
     {
         stopCurrentNetworkTask();
-        start_->setText("开始");
-        form_->setEnabled(true);
     }
+}
+
+void ConfigWidget::updateCtrlButtons(int state)
+{
+    if (state == NetworkTask::OK)
+    {
+        start_->setText(tr("STOP"));
+        start_->setChecked(true);
+    }
+    else
+    {
+        stopCurrentNetworkTask();
+    }
+    start_->setEnabled(true);
 }

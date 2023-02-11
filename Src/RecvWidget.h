@@ -1,5 +1,6 @@
 #pragma once
 
+#include "TitledWidget.h"
 #include <QByteArray>
 #include <QFrame>
 
@@ -11,7 +12,7 @@ class QLineEdit;
 class QComboBox;
 class ClickableLabel;
 
-class RecvWidget : public QFrame
+class RecvWidget : public TitledWidget
 {
     Q_OBJECT
 

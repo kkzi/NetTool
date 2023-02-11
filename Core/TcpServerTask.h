@@ -19,7 +19,8 @@ public:
     ~TcpServerTask();
 
 public:
-    Result start(boost::asio::io_context &io) override;
+    void doStart(boost::asio::io_context &io) override;
+    void doStop() override;
     void send(const QByteArray &) override;
 
 private:
@@ -31,6 +32,7 @@ signals:
     void sessionChanged(QStringList);
 
 private:
+    std::atomic<bool> stopped_{ false };
     std::unique_ptr<boost::asio::ip::tcp::acceptor> acc_{ nullptr };
     std::list<std::shared_ptr<TcpSession>> sessions_;
 };

@@ -1,4 +1,4 @@
-#include "Form.h"
+#include "MainWindow.h"
 #include <QApplication>
 #include <QWidget>
 #include <QtCore/QTextCodec>
@@ -10,14 +10,32 @@ int main(int argc, char **argv)
     QTextCodec::setCodecForTr(QTextCodec::codecForLocale());
     QTextCodec::setCodecForCStrings(QTextCodec::codecForLocale());
 
-    Form w;
+    MainWindow w;
     w.setStyleSheet(R"(
 *{font:normal 12px "Microsoft Yahei";}
-QFrame{background-color:#fff;outline:none;}
-QLabel#title{font-size:14px;font-weight:bold;}
+QFrame{outline:none;}
+TitledWidget {
+    background-color:#fff;
+    border: 5px solid #fff;
+    border-top-color:    qlineargradient(y0:0, y1:1,stop: 0 #ececef, stop: 1 #ffffff);
+    border-left-color:   qlineargradient(x0:0, x1:1,stop: 0 #ececef, stop: 1 #ffffff);
+    border-bottom-color: qlineargradient(y0:0, y1:1,stop: 0 #ffffff, stop: 1 #ececef);
+    border-right-color:  qlineargradient(x0:0, x1:1,stop: 0 #ffffff, stop: 1 #ececef);
+}
+TitledWidget #title{border:0;background-color:#f7f7f8;padding:6px 8px;}
+TitledWidget #title QLabel {font-size:14px;font-weight:bold;}
+MainWindow{background-color:#fdfdfd;}
+ConfigWidget QPushButton#ctrl {background-color:green;border:0;color:#fff;font-weight:bold;font-size:14px;}
+ConfigWidget QPushButton#ctrl:checked {background-color:red;}
+ConfigWidget QPushButton#ctrl:checked:disabled {background-color:#ccc;}
+RecvWidget QTextEdit, LogWidget QTextEdit { border:0; }
 RecvWidget QTextEdit, LogWidget QTextEdit{font:normal 13px "Consolas, monospace";}
 TcpSessionWidget QListView {border:0; padding:10px; }
         )");
+    w.setWindowTitle(QObject::tr("Net Assistat Tool v1.0 beta"));
     w.show();
     return a.exec();
 }
+
+
+

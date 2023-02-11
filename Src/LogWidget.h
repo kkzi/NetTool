@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QFrame>
+#include "TitledWidget.h"
 
 class QTextEdit;
 class QLabel;
 
-class LogWidget : public QFrame
+class LogWidget : public TitledWidget
 {
     Q_OBJECT
 

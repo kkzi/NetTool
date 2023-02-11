@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QFrame>
+#include "TitledWidget.h"
 
 class QCheckBox;
 class QTextEdit;
@@ -8,7 +8,7 @@ class QLineEdit;
 class QLabel;
 class QComboBox;
 
-class SendWidget : public QFrame
+class SendWidget : public TitledWidget
 {
     Q_OBJECT
 
@@ -24,7 +24,6 @@ private slots:
 
 private:
     QComboBox *mode_;
-    QLineEdit *bufferLimit_;
     QCheckBox *intervalBox_;
     QLineEdit *intervalEdit_;
     QCheckBox *autoSend_;

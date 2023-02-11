@@ -10,8 +10,11 @@ public:
     ~UdpTask();
 
 public:
-    Result start(io_context &io) override;
     void send(const QByteArray &) override;
+
+protected:
+    void doStart(io_context &io) override;
+    void doStop() override;
 
 private:
     void doRead();
@@ -19,5 +22,7 @@ private:
 private:
     std::unique_ptr<boost::asio::ip::udp::socket> sock_{ nullptr };
     std::string buffer_;
+    bool stopped_{ false };
     QString peer_;
+    boost::asio::ip::udp::endpoint remote_;
 };

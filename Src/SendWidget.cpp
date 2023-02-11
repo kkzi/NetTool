@@ -10,17 +10,17 @@
 #include <QTextEdit>
 
 SendWidget::SendWidget(QWidget *parent)
-    : QFrame(parent)
+    : TitledWidget(tr("Send Information"), new QFrame, new QWidget, parent)
     , mode_(new QComboBox(this))
-    , bufferLimit_(new QLineEdit("1000"))
-    , intervalBox_(new QCheckBox("每隔"))
+    , sendEdit_(new QTextEdit(this))
+    , intervalBox_(new QCheckBox(tr("Every")))
     , intervalEdit_(new QLineEdit("1000"))
-    , autoSend_(new QCheckBox("收到任何数据后开始发送"))
-    , sendEdit_(new QTextEdit)
+    , autoSend_(new QCheckBox(tr("Start when received any bytes")))
     , filePath_(new QLabel)
 {
-    bufferLimit_->setFixedWidth(50);
-    mode_->addItems(QStringList::fromStdList({ "文本", "十六进制", "文件" }));
+    sendEdit_->setAcceptRichText(false);
+    intervalEdit_->setFixedWidth(60);
+    mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex"), tr("File") }));
     connect(mode_, SIGNAL(currentIndexChanged(int)), this, SLOT(showModeDetail(int)));
 
     setupUi();
@@ -28,17 +28,8 @@ SendWidget::SendWidget(QWidget *parent)
 
 void SendWidget::setupUi()
 {
-    auto ctrl = new QHBoxLayout;
-    {
-        auto title = new QLabel("发送信息");
-        title->setObjectName("title");
-        ctrl->addWidget(title);
-    }
-    {
-        ctrl->addWidget(new QLabel("缓冲区大小"));
-        ctrl->addWidget(bufferLimit_);
-        ctrl->addWidget(new QLabel("字节"));
-    }
+    auto ctrl = new QHBoxLayout(corner_);
+    ctrl->setContentsMargins(0, 0, 0, 0);
     ctrl->addWidget(mode_);
 
     //{
@@ -52,24 +43,25 @@ void SendWidget::setupUi()
 
     ctrl->addStretch(1);
 
-    auto send = new QHBoxLayout;
+    auto sendLayout = new QHBoxLayout;
     {
-        send->addWidget(intervalBox_);
-        send->addWidget(intervalEdit_);
-        auto desc = new QLabel("毫秒发送");
-        send->addWidget(desc);
+        sendLayout->addWidget(intervalBox_);
+        sendLayout->addWidget(intervalEdit_);
+        auto desc = new QLabel(tr("ms send"));
+        sendLayout->addWidget(desc);
     }
-    send->addWidget(autoSend_);
+    sendLayout->addSpacing(20);
+    sendLayout->addWidget(autoSend_);
+    sendLayout->addStretch(1);
     {
-        auto sendBtn = new QPushButton("发送");
-        send->addWidget(sendBtn);
+        auto sendBtn = new QPushButton(tr("SEND"));
+        sendLayout->addWidget(sendBtn);
         connect(sendBtn, SIGNAL(clicked()), this, SLOT(sendData()), Qt::QueuedConnection);
     }
 
-    auto layout = new QVBoxLayout(this);
-    layout->addLayout(ctrl);
+    auto layout = new QVBoxLayout(central_);
     layout->addWidget(sendEdit_, 1);
-    layout->addLayout(send);
+    layout->addLayout(sendLayout);
 }
 
 void SendWidget::sendData()
@@ -81,19 +73,30 @@ void SendWidget::sendData()
     }
     auto data = sendEdit_->toPlainText().toLocal8Bit();
 
-    switch (mode_->currentIndex())
+    auto doSend = [task, this](auto &&block) {
+        switch (mode_->currentIndex())
+        {
+        case 0:  // text
+            task->send(block);
+            break;
+        case 1:  // hex
+            /// todo
+            task->send(fromHexString(QString(block)));
+            break;
+        case 2:  // file
+            /// todo
+            break;
+        }
+    };
+
+    int offset = 0;
+    int limit = 4096;
+    while (data.size() - offset > limit)
     {
-    case 0:  // text
-        task->send(data);
-        break;
-    case 1:  // hex
-        /// todo
-        task->send(fromHexString(QString(data)));
-        break;
-    case 2:  // file
-        /// todo
-        break;
+        doSend(data.mid(offset, limit));
+        offset += limit;
     }
+    doSend(data.mid(offset));
 }
 
 void SendWidget::showModeDetail(int)
