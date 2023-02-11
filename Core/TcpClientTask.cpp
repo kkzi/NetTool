@@ -53,7 +53,12 @@ void TcpClientTask::doStop()
 
 void TcpClientTask::send(const QByteArray &data)
 {
-    Q_ASSERT(sock_ != nullptr && sock_->is_open());
+    Q_ASSERT(sock_ != nullptr);
+    if (!sock_->is_open())
+    {
+        emit workStateChanged(FAILED);
+        return;
+    }
     buffer_.resize(data.size());
     std::copy(data.begin(), data.end(), buffer_.begin());
     boost::asio::async_write(*sock_, buffer(buffer_), [this](auto &&ec, auto &&len) {

@@ -167,7 +167,7 @@ void TcpServerTask::startSession(boost::asio::ip::tcp::socket &&sock)
     emit logMessage(tr("TCP connection established from %1").arg(from));
     sessions_.emplace_back(session);
     session->start([this, from](auto &&ptr, auto &&len) {
-        if (!stopped_)
+        if (stopped_)
         {
             return;
         }
