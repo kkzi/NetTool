@@ -4,12 +4,14 @@
 
 ## 界面
 
-
+![./assets/app.png](.\assets\app.png)
 
 ## 下载
 
+[Releases](https://github.com/kkzi/NetTool/releases/)
 
 ## 依赖库
+
 - Qt
 - boost
 
@@ -17,5 +19,3 @@
 
 使用 Qt 4.3.5 版本，尽可能减小编译生成exe体积 
 使用 Qt 静态库版本和 boost 头文件编译，尽可能减少发布依赖。目前只依赖 vc 运行时
-
-
