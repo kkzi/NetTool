@@ -1,10 +1,10 @@
-# Network Assistant Tool  [中文](.\readme_zh_CN.md)
+# Network Assistant Tool  [中文](./readme_zh_CN.md)
 
 a simple network/socket debug tool
 
 ## Screen shot
 
-![./assets/app.png](.\assets\app.png)
+![./assets/app.png](./assets/app_en_US.png))
 
 ## Download
 
