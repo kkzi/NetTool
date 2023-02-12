@@ -9,6 +9,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QTextEdit>
+#include <QTimer>
 
 SendWidget::SendWidget(QWidget *parent)
     : TitledWidget(tr("Send Information"), new QFrame, new QWidget, parent)
@@ -16,12 +17,15 @@ SendWidget::SendWidget(QWidget *parent)
     , sendEdit_(new QTextEdit(this))
     , intervalBox_(new QCheckBox(tr("Every")))
     , intervalEdit_(new QLineEdit("1000"))
+    , frameLimitEdit_(new QLineEdit("512"))
     , autoSend_(new QCheckBox(tr("Start when received any bytes")))
 {
     sendEdit_->setAcceptRichText(false);
     intervalEdit_->setFixedWidth(60);
+    frameLimitEdit_->setFixedWidth(60);
     mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex"), tr("File") }));
     connect(mode_, SIGNAL(currentIndexChanged(int)), this, SLOT(showModeDetail(int)));
+    connect(intervalBox_, SIGNAL(clicked(bool)), this, SLOT(ctrlSendTimer(bool)));
 
     setupUi();
 }
@@ -46,7 +50,15 @@ void SendWidget::setupUi()
         sendLayout->addWidget(desc);
     }
     sendLayout->addSpacing(20);
-    sendLayout->addWidget(autoSend_);
+    {
+        sendLayout->addWidget(new QLabel(tr("Frame Bytes")));
+        sendLayout->addWidget(frameLimitEdit_);
+    }
+    sendLayout->addSpacing(20);
+    /// todo
+    // sendLayout->addWidget(autoSend_);
+    autoSend_->hide();
+
     sendLayout->addStretch(1);
     {
         auto sendBtn = new QPushButton(tr("SEND"));
@@ -59,6 +71,27 @@ void SendWidget::setupUi()
     layout->addLayout(sendLayout);
 }
 
+QByteArray SendWidget::prepareData() const
+{
+    if (auto isFileMode = mode_->currentIndex() == 2; isFileMode)
+    {
+        QFile file(sendEdit_->toPlainText());
+        if (!file.open(QFile::ReadOnly))
+        {
+            return {};
+        }
+        /// todo
+        /// large file maybe lag/slow
+        auto bytes = file.readAll();
+        file.close();
+        return bytes;
+    }
+    else
+    {
+        return sendEdit_->toPlainText().toLocal8Bit();
+    }
+}
+
 void SendWidget::sendData()
 {
     auto task = NetworkTaskManager::instance()->current();
@@ -66,26 +99,28 @@ void SendWidget::sendData()
     {
         return;
     }
-    auto data = sendEdit_->toPlainText().toLocal8Bit();
+    auto data = prepareData();
+    if (data.isEmpty())
+    {
+        return;
+    }
 
     auto doSend = [task, this](auto &&block) {
         switch (mode_->currentIndex())
         {
         case 0:  // text
+        case 2:  // file
             task->send(block);
             break;
         case 1:  // hex
-            /// todo
             task->send(fromHexString(QString(block)));
-            break;
-        case 2:  // file
-            /// todo
             break;
         }
     };
 
+    /// todo
     int offset = 0;
-    int limit = 4096;
+    int limit = frameLimitEdit_->text().toInt();
     while (data.size() - offset > limit)
     {
         doSend(data.mid(offset, limit));
@@ -116,6 +151,35 @@ void SendWidget::openChooseFileDialog()
         return;
     }
     sendEdit_->setText(path);
+}
+
+void SendWidget::ctrlSendTimer(bool checked)
+{
+    bool ok = false;
+    auto ms = intervalEdit_->text().toInt(&ok);
+    if (!ok)
+    {
+        intervalBox_->setChecked(false);
+        intervalEdit_->setFocus();
+        return;
+    }
+
+    if (checked)
+    {
+        timer_ = new QTimer(this);
+        timer_->setSingleShot(false);
+        timer_->setInterval(ms);
+        timer_->start();
+        connect(timer_, SIGNAL(timeout()), this, SLOT(sendData()));
+        intervalEdit_->setDisabled(true);
+    }
+    else if (timer_ != nullptr)
+    {
+        timer_->stop();
+        delete timer_;
+        timer_ = nullptr;
+        intervalEdit_->setDisabled(false);
+    }
 }
 
 void SendWidget::resetToTextMode()

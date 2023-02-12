@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     QTextCodec::setCodecForCStrings(QTextCodec::codecForLocale());
 
     MainWindow w;
-    w.setWindowTitle("Net Assistat Tool v1.0 beta");
+    w.setWindowTitle("Net Assistat Tool v1.1 beta");
     w.show();
     return a.exec();
 }

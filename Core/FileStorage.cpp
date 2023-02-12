@@ -50,6 +50,7 @@ void FileStorage::saveToFile(const QString &from, const QByteArray &data)
     ensureOpenFile();
     Q_ASSERT(file_.isOpen());
     file_.write(data);
+    file_.flush();
 }
 
 void FileStorage::ensureOpenFile()
