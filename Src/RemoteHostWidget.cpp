@@ -3,20 +3,24 @@
 #include "NetworkConfig.h"
 #include <QLabel>
 #include <QLineEdit>
+#include <QSettings>
 #include <QString>
 #include <QVBoxLayout>
 #include <QWidget>
 
-RemoteHostWidget::RemoteHostWidget(QWidget *parent /*= nullptr*/)
+RemoteHostWidget::RemoteHostWidget(const QString &configGroup, QWidget *parent /*= nullptr*/)
     : QWidget(parent)
+    , configGroup_(configGroup)
     , remoteIp_(new QLineEdit)
     , remotePort_(new QLineEdit)
 {
-
-    /// todo for test
-    remoteIp_->setText("127.0.0.1");
-    remotePort_->setText("33001");
-    ///
+    {
+        QSettings s(CONFIG_FILE_NAME, QSettings::IniFormat);
+        s.beginGroup(configGroup_);
+        remoteIp_->setText(s.value(KEY_REMOTE_IP).toString());
+        remotePort_->setText(s.value(KEY_REMOTE_PORT).toString());
+        s.endGroup();
+    }
 
     auto layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -30,4 +34,11 @@ void RemoteHostWidget::updateConfig(NetworkConfig &nc)
 {
     nc.remoteIp = remoteIp_->text();
     nc.remotePort = remotePort_->text().toInt();
+    {
+        QSettings s(CONFIG_FILE_NAME, QSettings::IniFormat);
+        s.beginGroup(configGroup_);
+        s.setValue(KEY_REMOTE_IP, remoteIp_->text());
+        s.setValue(KEY_REMOTE_PORT, remotePort_->text());
+        s.endGroup();
+    }
 }

@@ -16,11 +16,15 @@ public:
     void setPath(const QString &path);
     bool start();
     void stop();
-    QString path() const;
 
 public slots:
     void saveToFile(const QString &from, const QByteArray &data);
 
 private:
+    void ensureOpenFile();
+
+private:
+    bool isRunning_{ false };
+    QString filepath_;
     QFile file_;
 };

@@ -9,45 +9,54 @@ FileStorage::~FileStorage()
 
 void FileStorage::setPath(const QString &path)
 {
-    if (path == file_.fileName())
+    if (filepath_ == path)
     {
         return;
     }
+
     if (file_.isOpen())
     {
-        stop();
-        file_.setFileName(path);
-        start();
+        file_.close();
     }
-    else
-    {
-        file_.setFileName(path);
-    }
+
+    filepath_ = path;
 }
 
 bool FileStorage::start()
 {
-    return file_.open(QFile::WriteOnly);
+    isRunning_ = true;
+    return true;
 }
 
 void FileStorage::stop()
 {
+    isRunning_ = false;
     if (file_.isOpen())
     {
         file_.close();
     }
 }
 
-QString FileStorage::path() const
-{
-    return file_.fileName();
-}
-
 void FileStorage::saveToFile(const QString &from, const QByteArray &data)
 {
     /// todo: 区分不同客户端发送的数据
-    /// todo fix this
-    //Q_UNUSED(from);
-    //Q_ASSERT(file_.isOpen());
-    //file_.write(data);
+    Q_UNUSED(from);
+
+    if (filepath_.isEmpty())
+    {
+        return;
+    }
+
+    ensureOpenFile();
+    Q_ASSERT(file_.isOpen());
+    file_.write(data);
+}
+
+void FileStorage::ensureOpenFile()
+{
+    if (!file_.isOpen())
+    {
+        file_.setFileName(filepath_);
+        file_.open(QFile::WriteOnly | QFile::Truncate);
+    }
 }

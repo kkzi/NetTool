@@ -20,18 +20,20 @@
 #include <QVBoxLayout>
 
 RecvWidget::RecvWidget(QWidget *parent)
-    : TitledWidget(tr("Recive Information"), new QFrame, recvEdit_ = new QTextEdit, parent)
-    , mode_(new QComboBox(this))
+    : TitledWidget(tr("Receive Information"), new QFrame, recvEdit_ = new QTextEdit, parent)
+    , saveFile_(new QCheckBox(tr("Save File")))
     , filePath_(new ClickableLabel(this))
+    , mode_(new QComboBox(this))
     , timer_(new QTimer(this))
 {
     recvEdit_->setReadOnly(true);
-    mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex"), tr("File") }));
+    mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex") }));
 
     timer_->setSingleShot(true);
-    connect(mode_, SIGNAL(currentIndexChanged(int)), this, SLOT(showModeDetail(int)));
+    connect(saveFile_, SIGNAL(clicked(bool)), this, SLOT(setSaveFileEnabled(bool)));
     connect(filePath_, SIGNAL(mouseLeftButtonClicked()), this, SLOT(openStoreFilePath()));
     connect(filePath_, SIGNAL(mouseRightButtonClicked()), this, SLOT(openStoreDir()));
+    connect(mode_, SIGNAL(currentIndexChanged(int)), this, SLOT(updateBufferDisplay()));
     connect(timer_, SIGNAL(timeout()), this, SLOT(updateBufferDisplay()));
 
     setupUi();
@@ -61,13 +63,12 @@ void RecvWidget::setupUi()
 {
     auto cornerLayout = new QHBoxLayout(corner_);
     cornerLayout->setContentsMargins(0, 0, 0, 0);
-    cornerLayout->addWidget(mode_);
     {
+        cornerLayout->addWidget(saveFile_);
         cornerLayout->addWidget(filePath_);
-        filePath_->hide();
     }
 
-    cornerLayout->addStretch(1);
+    cornerLayout->addWidget(mode_);
     {
         auto cleanBtn = new QPushButton(tr("CLEAR"));
         cornerLayout->addWidget(cleanBtn);
@@ -84,27 +85,29 @@ void RecvWidget::updateBufferDisplay()
     bar->setValue(bar->maximum());
 }
 
-void RecvWidget::showModeDetail(int index)
+void RecvWidget::setSaveFileEnabled(bool checked)
 {
-    bool fileMode = isFileMode();
-    filePath_->setVisible(fileMode);
-    if (!fileMode)
+    if (!checked)
     {
-        updateBufferDisplay();
+        NetworkTaskManager::instance()->setStoragePath("");
         return;
     }
-
-    if (filePath_->text().isEmpty())
+    if (auto path = storageFilePath(); path.isEmpty())
     {
         openStoreFilePath();
+    }
+    else
+    {
+        NetworkTaskManager::instance()->setStoragePath(path);
     }
 }
 
 void RecvWidget::openStoreFilePath()
 {
-    auto dir = QFileDialog::getExistingDirectory(nullptr, "选择文件存储目录");
+    auto dir = QFileDialog::getExistingDirectory(nullptr, tr("Choose file storage path"));
     if (dir.isEmpty())
     {
+        saveFile_->setChecked(false);
         return;
     }
     auto filepath = QString("%1/%2.dat").arg(dir).arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss-zzz"));

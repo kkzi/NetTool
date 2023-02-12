@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/css">
+        <file>light.css</file>
+    </qresource>
+    <qresource prefix="/lang">
+        <file>nettool_zh_CN.qm</file>
+    </qresource>
+    <qresource prefix="/img">
+        <file>logo.ico</file>
+        <file>logo.png</file>
+        <file>settings.png</file>
+    </qresource>
+</RCC>

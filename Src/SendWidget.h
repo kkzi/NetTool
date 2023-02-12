@@ -21,6 +21,8 @@ private:
 private slots:
     void sendData();
     void showModeDetail(int);
+    void resetToTextMode();
+    void openChooseFileDialog();
 
 private:
     QComboBox *mode_;
@@ -28,5 +30,4 @@ private:
     QLineEdit *intervalEdit_;
     QCheckBox *autoSend_;
     QTextEdit *sendEdit_;
-    QLabel *filePath_;
 };

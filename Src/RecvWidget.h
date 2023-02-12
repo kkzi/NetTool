@@ -34,16 +34,16 @@ public slots:
     void append(const QString &from, const QByteArray &data);
 
 private slots:
-    void showModeDetail(int);
+    void setSaveFileEnabled(bool);
     void openStoreFilePath();
     void openStoreDir();
     void cleanBuffer();
 
 private:
-    QTextEdit *recvEdit_;
-    QComboBox *mode_;
+    QCheckBox *saveFile_;
     ClickableLabel *filePath_;
-    QLineEdit *bufferLimit_;
+    QComboBox *mode_;
+    QTextEdit *recvEdit_;
     QByteArray buffer_;
     QTimer *timer_;
 };

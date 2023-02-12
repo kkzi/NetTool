@@ -1,13 +1,12 @@
 #pragma once
 
+#include <QStringList>
 #include <QtNetwork/QHostAddress>
 #include <QtNetwork/QNetworkInterface>
-#include <QStringList>
-
 
 static QStringList getLocalIpAddress()
 {
-    QStringList arr;
+    QStringList arr{ "0.0.0.0" };
     for (auto it : QNetworkInterface::allInterfaces())
     {
         auto flags = it.flags();
@@ -25,4 +24,3 @@ static QStringList getLocalIpAddress()
     arr.sort();
     return arr;
 }
-

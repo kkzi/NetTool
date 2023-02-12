@@ -3,6 +3,7 @@
 #include "NetworkTaskManager.h"
 #include <QCheckBox>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -16,7 +17,6 @@ SendWidget::SendWidget(QWidget *parent)
     , intervalBox_(new QCheckBox(tr("Every")))
     , intervalEdit_(new QLineEdit("1000"))
     , autoSend_(new QCheckBox(tr("Start when received any bytes")))
-    , filePath_(new QLabel)
 {
     sendEdit_->setAcceptRichText(false);
     intervalEdit_->setFixedWidth(60);
@@ -31,17 +31,12 @@ void SendWidget::setupUi()
     auto ctrl = new QHBoxLayout(corner_);
     ctrl->setContentsMargins(0, 0, 0, 0);
     ctrl->addWidget(mode_);
-
-    //{
-    //    auto fileBtn = new QPushButton("选择文件");
-    //    ctrl->addWidget(fileBtn);
-    //    ctrl->addWidget(filePath_);
-    //    auto closeBtn = new QPushButton("关闭");
-    //    ctrl->addWidget(closeBtn);
-    //    closeBtn->hide();
-    //}
-
-    ctrl->addStretch(1);
+    {
+        auto cleanBtn = new QPushButton(tr("CLEAR"));
+        ctrl->addWidget(cleanBtn);
+        connect(cleanBtn, SIGNAL(clicked()), sendEdit_, SLOT(clear()));
+        connect(cleanBtn, SIGNAL(clicked()), this, SLOT(resetToTextMode()));
+    }
 
     auto sendLayout = new QHBoxLayout;
     {
@@ -99,7 +94,31 @@ void SendWidget::sendData()
     doSend(data.mid(offset));
 }
 
-void SendWidget::showModeDetail(int)
+void SendWidget::showModeDetail(int index)
 {
-    // do nothing
+    if (index == 2)
+    {
+        sendEdit_->setReadOnly(true);
+        openChooseFileDialog();
+    }
+    else
+    {
+        sendEdit_->setReadOnly(false);
+    }
+}
+
+void SendWidget::openChooseFileDialog()
+{
+    auto path = QFileDialog::getOpenFileName(nullptr, tr("Choose file to send"));
+    if (path.isEmpty())
+    {
+        resetToTextMode();
+        return;
+    }
+    sendEdit_->setText(path);
+}
+
+void SendWidget::resetToTextMode()
+{
+    mode_->setCurrentIndex(0);
 }

@@ -1,25 +1,31 @@
 #include "ConfigWidget.h"
+#include "AppSettingsDialog.h"
 #include "CommonUi.h"
 #include "MulticastConfigWidget.h"
 #include "MulticastTask.h"
 #include "NetUtil.h"
 #include "NetworkTask.h"
+#include "PlaceholderWidget.h"
 #include "RemoteHostWidget.h"
 #include "TcpClientTask.h"
 #include "TcpServerTask.h"
 #include "TcpSessionWidget.h"
 #include "UdpTask.h"
 #include <QComboBox>
+#include <QEvent>
+#include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMetaObject>
 #include <QPushButton>
+#include <QSettings>
 #include <QStackedWidget>
+#include <QToolButton>
 #include <QVBoxLayout>
 
 ConfigWidget::ConfigWidget(QWidget *parent)
-    : TitledWidget(tr("Configurations"), start_ = new QPushButton(tr("START")), new QWidget, parent)
+    : TitledWidget(tr("Configurations"), new QWidget, new QWidget, parent)
     , proto_(new QComboBox(this))
     , localIp_(new QComboBox(this))
     , localPort_(new QLineEdit("44441", this))
@@ -28,43 +34,76 @@ ConfigWidget::ConfigWidget(QWidget *parent)
 {
     qRegisterMetaType<NetworkConfig>("NetworkConfig");
 
+    start_ = new QPushButton(tr("START"));
     start_->setObjectName("ctrl");
     start_->setFixedSize(80, 32);
     start_->setCheckable(true);
 
-    localIp_->addItem("0.0.0.0");
-    localIp_->addItems(getLocalIpAddress());
-    registerProto<TcpServerTask, QWidget>("TCP Server");
+    auto ips = getLocalIpAddress();
+    localIp_->addItems(ips);
+
+    registerProto<TcpServerTask, PlaceholderWidget>("TCP Server");
     registerProto<TcpClientTask, RemoteHostWidget>("TCP Client");
     registerProto<UdpTask, RemoteHostWidget>("UDP");
     registerProto<MulticastTask, MulticastConfigWidget>("UDP Multicast");
 
     setupUi();
+    {
+        QSettings s(CONFIG_FILE_NAME, QSettings::IniFormat);
+        proto_->setCurrentIndex(s.value(KEY_PROTOCOL).toInt());
+    }
 }
 
 void ConfigWidget::setupUi()
 {
-    auto row1 = new QHBoxLayout(central_);
-    row1->setContentsMargins(10, 10, 10, 10);
-    row1->addLayout(makeLabeledField(tr("Protocol"), proto_));
-    row1->addLayout(makeLabeledField(tr("Local IP"), localIp_));
-    row1->addLayout(makeLabeledField(tr("Local Port"), localPort_, 60));
-    row1->addWidget(protoDetail_);
-    row1->addStretch(1);
-    row1->addSpacing(20);
-    row1->addWidget(start_);
+    {
+        auto cornerLayout = new QHBoxLayout(corner_);
+        cornerLayout->setContentsMargins(0, 0, 0, 0);
+        auto settingsBtn = new QToolButton(this);
+        settingsBtn->setIcon(QIcon(":/img/settings.png"));
+        settingsBtn->setText(tr("Settings"));
+        settingsBtn->setToolButtonStyle(Qt::ToolButtonIconOnly);
+        settingsBtn->setObjectName("lang");
+        settingsBtn->setIconSize(QSize(22, 22));
+        settingsBtn->setFixedSize(settingsBtn->iconSize());
+        cornerLayout->addWidget(settingsBtn);
+        connect(settingsBtn, SIGNAL(clicked()), this, SLOT(showSettingsDialog()));
+    }
+    {
+        auto formLayout = new QHBoxLayout(form_);
+        formLayout->setContentsMargins(10, 10, 10, 10);
+        formLayout->addLayout(makeLabeledField(tr("Protocol"), proto_));
+        formLayout->addLayout(makeLabeledField(tr("Local IP"), localIp_));
+        formLayout->addLayout(makeLabeledField(tr("Local Port"), localPort_, 60));
+        formLayout->addWidget(protoDetail_);
 
-    connect(proto_, SIGNAL(currentIndexChanged(int)), protoDetail_, SLOT(setCurrentIndex(int)));
+        auto centralLayout = new QHBoxLayout(central_);
+        centralLayout->addWidget(form_);
+        centralLayout->addStretch(1);
+        centralLayout->addSpacing(20);
+        centralLayout->addWidget(start_);
+    }
+
+    connect(proto_, SIGNAL(currentIndexChanged(int)), this, SLOT(showDetailWidget(int)));
     connect(start_, SIGNAL(clicked(bool)), this, SLOT(ctrlNetworkTask(bool)));
 }
 
 void ConfigWidget::startNewNetworkTask()
 {
-    auto ntm = NetworkTaskManager::instance();
+    auto proto = proto_->currentText();
+    {
+        QSettings s(CONFIG_FILE_NAME, QSettings::IniFormat);
+        s.setValue(KEY_PROTOCOL, proto_->currentIndex());
+        s.beginGroup(proto);
+        s.setValue(KEY_LOCAL_IP, localIp_->currentIndex());
+        s.setValue(KEY_LOCAL_PORT, localPort_->text());
+        s.endGroup();
+    }
 
+    auto ntm = NetworkTaskManager::instance();
     auto detail = protoDetail_->currentWidget();
     auto nc = gatherConfig(detail);
-    auto task = ntm->create(proto_->currentText(), nc);
+    auto task = ntm->create(proto, nc);
     connect(task, SIGNAL(workStateChanged(int)), this, SLOT(updateCtrlButtons(int)));
     Q_CHECK_PTR(task);
     ntm->start(task);
@@ -130,4 +169,24 @@ void ConfigWidget::updateCtrlButtons(int state)
         stopCurrentNetworkTask();
     }
     start_->setEnabled(true);
+}
+
+void ConfigWidget::showDetailWidget(int index)
+{
+    {
+        QSettings s(CONFIG_FILE_NAME, QSettings::IniFormat);
+        auto proto = proto_->currentText();
+        s.beginGroup(proto);
+        auto ip = s.value(KEY_LOCAL_IP).toInt();
+        localIp_->setCurrentIndex(ip);
+        localPort_->setText(s.value(KEY_LOCAL_PORT).toString());
+        s.endGroup();
+    }
+    protoDetail_->setCurrentIndex(index);
+}
+
+void ConfigWidget::showSettingsDialog()
+{
+    AppSettingsDialog dialog(this);
+    dialog.exec();
 }

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "TitledWidget.h"
 #include "NetworkConfig.h"
 #include "NetworkTaskManager.h"
+#include "TitledWidget.h"
 #include <QComboBox>
 #include <QMap>
 #include <QStackedWidget>
@@ -27,7 +27,7 @@ public:
     {
         NetworkTaskManager::instance()->registar<T>(name);
         proto_->addItem(name);
-        protoDetail_->addWidget(new W(this));
+        protoDetail_->addWidget(new W(name, this));
     }
 
 private:
@@ -39,6 +39,8 @@ private:
 private slots:
     void ctrlNetworkTask(bool);
     void updateCtrlButtons(int);
+    void showDetailWidget(int);
+    void showSettingsDialog();
 
 private:
     QComboBox *proto_;

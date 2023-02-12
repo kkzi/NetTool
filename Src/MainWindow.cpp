@@ -28,9 +28,9 @@ void MainWindow::setupUi()
     layout->setContentsMargins(10, 0, 10, 10);
     layout->setSpacing(6);
     layout->addWidget(new ConfigWidget(this));
-    layout->addWidget(recw = new RecvWidget(this), 5);
+    layout->addWidget(recw = new RecvWidget(this), 4);
     layout->addWidget(new SendWidget(this), 3);
-    layout->addWidget(logw);
+    layout->addWidget(logw, 2);
     // layout->addWidget(new QStatusBar);
 
     auto ntm = NetworkTaskManager::instance();

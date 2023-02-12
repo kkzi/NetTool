@@ -14,6 +14,7 @@ add_definitions(-DFMT_HEADER_ONLY -D_WIN32_WINNT=0x0601)
 set(QT_DIR C:/Qt/4.3.5)
 set(QT_QMAKE_EXECUTABLE ${QT_DIR}/bin/qmake.exe)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt4 COMPONENTS QtGui) 
 
