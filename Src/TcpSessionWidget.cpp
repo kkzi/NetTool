@@ -8,8 +8,9 @@
 
 void TcpSessionModel::setup(const QStringList &arr)
 {
+    beginResetModel();
     data_ = arr;
-    reset();
+    endResetModel();
 }
 
 int TcpSessionModel::rowCount(const QModelIndex &parent /*= QModelIndex()*/) const

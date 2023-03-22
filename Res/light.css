@@ -1,4 +1,4 @@
-*{font:normal 12px "Microsoft Yahei";}
+* { font: normal 12px "Microsoft YaHei" }
 QFrame{outline:none;}
 TitledWidget {
     background-color:#fff;
@@ -12,8 +12,8 @@ TitledWidget #title{border:0;background-color:#f7f7f8;padding:6px 8px;}
 TitledWidget #title>QLabel {font-size:14px;font-weight:bold;}
 MainWindow{background-color:#fdfdfd;}
 ConfigWidget QPushButton#ctrl {background-color:green;border:0;color:#fff;font-weight:bold;font-size:14px;}
+ConfigWidget QPushButton#ctrl:disabled, ConfigWidget QPushButton#ctrl:checked:disabled  {background-color:#ccc;}
 ConfigWidget QPushButton#ctrl:checked {background-color:red;}
-ConfigWidget QPushButton#ctrl:checked:disabled {background-color:#ccc;}
 ConfigWidget QToolButton#lang{background-color:transparent;border:0;}
 RecvWidget QTextEdit, LogWidget QTextEdit { border:0; }
 RecvWidget QTextEdit, LogWidget QTextEdit{font:normal 13px "Consolas, monospace";}

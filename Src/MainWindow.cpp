@@ -32,6 +32,7 @@ void MainWindow::setupUi()
     layout->addWidget(new SendWidget(this), 3);
     layout->addWidget(logw, 2);
     // layout->addWidget(new QStatusBar);
+    resize(960, 720);
 
     auto ntm = NetworkTaskManager::instance();
     connect(ntm, SIGNAL(logMessage(QString)), logw, SLOT(append(QString)), Qt::QueuedConnection);

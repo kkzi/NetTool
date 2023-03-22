@@ -29,12 +29,12 @@ void TcpClientTask::doStart(io_context &io)
         }
         if (ec)
         {
-            emit logMessage(QString("连接TCP服务器%1失败").arg(addr));
+            emit logMessage(tr("Connect to TCP server %1 failed").arg(addr));
             sock_->close();
         }
         else
         {
-            emit logMessage(QString("连接TCP服务器%1成功").arg(addr));
+            emit logMessage(tr("Connect to TCP server %1 successed").arg(addr));
             doRead();
         }
         emit workStateChanged(ec ? NetworkTask::FAILED : NetworkTask::OK);
@@ -68,11 +68,11 @@ void TcpClientTask::send(const QByteArray &data)
         }
         if (ec)
         {
-            emit logMessage(QString("向TCP服务器%1发送数据失败").arg(peer_));
+            emit logMessage(tr("Send message to TCP server %1 failed").arg(peer_));
         }
         else
         {
-            emit logMessage(QString("连接TCP服务器%1发送%2字节").arg(peer_).arg(len));
+            emit logMessage(tr("Send %1 bytes to TCP server %2").arg(len).arg(peer_));
         }
     });
 }

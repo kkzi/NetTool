@@ -6,6 +6,8 @@
 
 class MulticastTask : public NetworkTask
 {
+    Q_OBJECT
+
 public:
     ~MulticastTask();
 

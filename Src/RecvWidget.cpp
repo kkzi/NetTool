@@ -27,7 +27,8 @@ RecvWidget::RecvWidget(QWidget *parent)
     , timer_(new QTimer(this))
 {
     recvEdit_->setReadOnly(true);
-    mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex") }));
+    // mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex") }));
+    mode_->addItems(QStringList{ tr("Text"), tr("Hex") });
 
     timer_->setSingleShot(true);
     connect(saveFile_, SIGNAL(clicked(bool)), this, SLOT(setSaveFileEnabled(bool)));

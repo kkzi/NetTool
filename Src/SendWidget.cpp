@@ -17,13 +17,15 @@ SendWidget::SendWidget(QWidget *parent)
     , sendEdit_(new QTextEdit(this))
     , intervalBox_(new QCheckBox(tr("Every")))
     , intervalEdit_(new QLineEdit("1000"))
-    , frameLimitEdit_(new QLineEdit("512"))
+    , frameLimitEdit_(new QLineEdit("0"))
     , autoSend_(new QCheckBox(tr("Start when received any bytes")))
 {
     sendEdit_->setAcceptRichText(false);
     intervalEdit_->setFixedWidth(60);
     frameLimitEdit_->setFixedWidth(60);
-    mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex"), tr("File") }));
+    frameLimitEdit_->hide();
+    // mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex"), tr("File") }));
+    mode_->addItems(QStringList{ tr("Text"), tr("Hex"), tr("File") });
     connect(mode_, SIGNAL(currentIndexChanged(int)), this, SLOT(showModeDetail(int)));
     connect(intervalBox_, SIGNAL(clicked(bool)), this, SLOT(ctrlSendTimer(bool)));
 
@@ -51,8 +53,8 @@ void SendWidget::setupUi()
     }
     sendLayout->addSpacing(20);
     {
-        sendLayout->addWidget(new QLabel(tr("Frame Bytes")));
-        sendLayout->addWidget(frameLimitEdit_);
+        // sendLayout->addWidget(new QLabel(tr("Frame Bytes")));
+        // sendLayout->addWidget(frameLimitEdit_);
     }
     sendLayout->addSpacing(20);
     /// todo
@@ -121,6 +123,11 @@ void SendWidget::sendData()
     /// todo
     int offset = 0;
     int limit = frameLimitEdit_->text().toInt();
+    if (limit == 0)
+    {
+        doSend(data);
+        return;
+    }
     while (data.size() - offset > limit)
     {
         doSend(data.mid(offset, limit));

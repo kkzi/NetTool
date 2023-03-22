@@ -22,11 +22,13 @@ void MulticastTask::doStart(io_context &io)
 {
     if (cfg_.localPort == 0 || cfg_.localPort > 0xFFFF)
     {
-        throw std::logic_error(std::format("端口{}错误", cfg_.localPort));
+        emit logMessage(tr("Invalid port %1").arg(cfg_.localPort));
+        return;
     }
     if (cfg_.multicastIp.isEmpty())
     {
-        throw std::logic_error(std::string("组播地址不能为空"));
+        emit logMessage(tr("Invalid multicast ip address %1").arg(cfg_.multicastIp));
+        return;
     }
     /// todo 检查组播IP地址
     group_ = QString("%1:%2").arg(cfg_.remoteIp).arg(cfg_.remotePort);
@@ -59,11 +61,11 @@ void MulticastTask::send(const QByteArray &data)
     recv_->async_send_to(buffer(sendBuffer_), groupEndpoint_, [this](auto &&ec, auto &&len) {
         if (ec)
         {
-            emit logMessage(QString("组播发送数据到%1失败").arg(group_));
+            emit logMessage(tr("Send multicast message to %1 failed").arg(group_));
         }
         else
         {
-            emit logMessage(QString("组播发送%1字节到%2").arg(len).arg(group_));
+            emit logMessage(tr("Send %1 bytes to multicast %2").arg(len).arg(group_));
         }
     });
 }
