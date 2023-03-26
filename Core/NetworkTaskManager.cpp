@@ -1,4 +1,4 @@
-#include "NetworkTaskManager.h"
+﻿#include "NetworkTaskManager.h"
 #include "FileStorage.h"
 #include "NetworkTask.h"
 
@@ -6,8 +6,7 @@ NetworkTaskManager::NetworkTaskManager(QObject *parent /*= nullptr*/)
     : QObject(parent)
     , storage_(new FileStorage(this))
 {
-    connect(this, SIGNAL(dataReceived(QString, QByteArray)), storage_, SLOT(saveToFile(QString, QByteArray)),
-        Qt::QueuedConnection);
+    connect(this, &NetworkTaskManager::dataReceived, storage_, &FileStorage::saveToFile, Qt::QueuedConnection);
 }
 
 NetworkTaskManager::~NetworkTaskManager()
@@ -25,9 +24,8 @@ NetworkTask *NetworkTaskManager::create(const QString &name, const NetworkConfig
     auto task = creators_.contains(name) ? creators_.value(name)() : nullptr;
     if (task != nullptr)
     {
-        connect(task, SIGNAL(logMessage(QString)), this, SIGNAL(logMessage(QString)), Qt::QueuedConnection);
-        connect(task, SIGNAL(dataReceived(QString, QByteArray)), this, SIGNAL(dataReceived(QString, QByteArray)),
-            Qt::QueuedConnection);
+        connect(task, &NetworkTask::logMessage, this, &NetworkTaskManager::logMessage, Qt::QueuedConnection);
+        connect(task, &NetworkTask::dataReceived, this, &NetworkTaskManager::dataReceived, Qt::QueuedConnection);
     }
     task->setConfig(conf);
 

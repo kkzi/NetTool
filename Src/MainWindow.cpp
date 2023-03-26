@@ -1,4 +1,4 @@
-#include "MainWindow.h"
+﻿#include "MainWindow.h"
 #include "ConfigWidget.h"
 #include "LogWidget.h"
 #include "NetworkTaskManager.h"
@@ -22,7 +22,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUi()
 {
-    QWidget *recw;
+    RecvWidget *recw;
     auto logw = new LogWidget(this);
     auto layout = new QVBoxLayout(this);
     layout->setContentsMargins(10, 0, 10, 10);
@@ -35,7 +35,6 @@ void MainWindow::setupUi()
     resize(960, 720);
 
     auto ntm = NetworkTaskManager::instance();
-    connect(ntm, SIGNAL(logMessage(QString)), logw, SLOT(append(QString)), Qt::QueuedConnection);
-    connect(
-        ntm, SIGNAL(dataReceived(QString, QByteArray)), recw, SLOT(append(QString, QByteArray)), Qt::QueuedConnection);
+    connect(ntm, &NetworkTaskManager::logMessage, logw, &LogWidget::append, Qt::QueuedConnection);
+    connect(ntm, &NetworkTaskManager::dataReceived, recw, &RecvWidget::append, Qt::QueuedConnection);
 }

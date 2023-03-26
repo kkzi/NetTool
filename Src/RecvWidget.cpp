@@ -1,4 +1,4 @@
-#include "RecvWidget.h"
+﻿#include "RecvWidget.h"
 #include "ClickableLabel.h"
 #include "FileStorage.h"
 #include "HexUtil.h"
@@ -31,11 +31,11 @@ RecvWidget::RecvWidget(QWidget *parent)
     mode_->addItems(QStringList{ tr("Text"), tr("Hex") });
 
     timer_->setSingleShot(true);
-    connect(saveFile_, SIGNAL(clicked(bool)), this, SLOT(setSaveFileEnabled(bool)));
-    connect(filePath_, SIGNAL(mouseLeftButtonClicked()), this, SLOT(openStoreFilePath()));
-    connect(filePath_, SIGNAL(mouseRightButtonClicked()), this, SLOT(openStoreDir()));
-    connect(mode_, SIGNAL(currentIndexChanged(int)), this, SLOT(updateBufferDisplay()));
-    connect(timer_, SIGNAL(timeout()), this, SLOT(updateBufferDisplay()));
+    connect(saveFile_, &QPushButton::clicked, this, &RecvWidget::setSaveFileEnabled);
+    connect(filePath_, &ClickableLabel::mouseLeftButtonClicked, this, &RecvWidget::openStoreFilePath);
+    connect(filePath_, &ClickableLabel::mouseRightButtonClicked, this, &RecvWidget::openStoreDir);
+    connect(mode_, &QComboBox::currentIndexChanged, this, &RecvWidget::updateBufferDisplay);
+    connect(timer_, &QTimer::timeout, this, &RecvWidget::updateBufferDisplay);
 
     setupUi();
 }
@@ -73,8 +73,8 @@ void RecvWidget::setupUi()
     {
         auto cleanBtn = new QPushButton(tr("CLEAR"));
         cornerLayout->addWidget(cleanBtn);
-        connect(cleanBtn, SIGNAL(clicked()), recvEdit_, SLOT(clear()));
-        connect(cleanBtn, SIGNAL(clicked()), this, SLOT(cleanBuffer()));
+        connect(cleanBtn, &QPushButton::clicked, recvEdit_, &QTextEdit::clear);
+        connect(cleanBtn, &QPushButton::clicked, this, &RecvWidget::cleanBuffer);
     }
 }
 

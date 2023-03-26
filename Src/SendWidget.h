@@ -7,6 +7,7 @@ class QTextEdit;
 class QLineEdit;
 class QLabel;
 class QComboBox;
+class QPushButton;
 class QTimer;
 
 class SendWidget : public TitledWidget
@@ -18,7 +19,8 @@ public:
 
 private:
     void setupUi();
-    QByteArray prepareData() const;
+    QByteArray prepareData();
+    bool isFileMode() const;
 
 private slots:
     void sendData();
@@ -33,6 +35,8 @@ private:
     QLineEdit *intervalEdit_;
     QLineEdit *frameLimitEdit_;
     QCheckBox *autoSend_;
+    QPushButton *sendButton_{ nullptr };
     QTextEdit *sendEdit_;
     QTimer *timer_;
+    size_t offset_{ 0 };
 };

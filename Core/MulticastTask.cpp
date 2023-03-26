@@ -1,4 +1,4 @@
-#include "MulticastTask.h"
+Ôªø#include "MulticastTask.h"
 #include <boost/asio/basic_socket.hpp>
 #include <boost/asio/ip/multicast.hpp>
 
@@ -30,8 +30,8 @@ void MulticastTask::doStart(io_context &io)
         emit logMessage(tr("Invalid multicast ip address %1").arg(cfg_.multicastIp));
         return;
     }
-    /// todo ºÏ≤È◊È≤•IPµÿ÷∑
-    group_ = QString("%1:%2").arg(cfg_.remoteIp).arg(cfg_.remotePort);
+    /// todo Ê£ÄÊü•ÁªÑÊí≠IPÂú∞ÂùÄ
+    group_ = QString("%1:%2").arg(cfg_.multicastIp).arg(cfg_.localPort);
     groupEndpoint_ = udp::endpoint(address::from_string(cfg_.multicastIp.toStdString()), cfg_.localPort);
 
     udp::endpoint listen(address::from_string(cfg_.localIp.toStdString()), cfg_.localPort);

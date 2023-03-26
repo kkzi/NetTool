@@ -1,4 +1,4 @@
-#include "TcpSessionWidget.h"
+﻿#include "TcpSessionWidget.h"
 #include "NetworkTaskManager.h"
 #include "TcpServerTask.h"
 #include <QListView>
@@ -49,9 +49,8 @@ void TcpSessionWidget::onTaskStarted()
 {
     auto task = NetworkTaskManager::instance()->current();
     Q_CHECK_PTR(task);
-    bool ok =
-        connect(task, SIGNAL(sessionChanged(QStringList)), model_, SLOT(setup(QStringList)), Qt::QueuedConnection);
-    Q_ASSERT(ok);
+    //bool ok = connect(task, &NetworkTask::sessionChanged, model_, &TcpSessionModel::setup, Qt::QueuedConnection);
+    //Q_ASSERT(ok);
 }
 
 void TcpSessionWidget::onTaskStopped()

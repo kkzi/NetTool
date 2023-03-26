@@ -1,4 +1,4 @@
-#include "AppSettingsDialog.h"
+﻿#include "AppSettingsDialog.h"
 #include "App.h"
 #include "CommonUi.h"
 #include "NetworkConfig.h"
@@ -22,7 +22,7 @@ AppSettingsDialog::AppSettingsDialog(QWidget *parent /*= nullptr*/)
     auto okBtn = new QPushButton(tr("OK"), this);
     okBtn->setFixedWidth(80);
 
-    connect(okBtn, SIGNAL(clicked()), this, SLOT(updateSettings()));
+    connect(okBtn, &QPushButton::clicked, this, &AppSettingsDialog::updateSettings);
 
     auto layout = new QVBoxLayout(this);
     layout->addLayout(makeLabeledField(tr("Theme"), themeBox_, 60, 200));

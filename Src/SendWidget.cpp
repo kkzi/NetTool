@@ -1,4 +1,4 @@
-#include "SendWidget.h"
+﻿#include "SendWidget.h"
 #include "HexUtil.h"
 #include "NetworkTaskManager.h"
 #include <QCheckBox>
@@ -23,11 +23,9 @@ SendWidget::SendWidget(QWidget *parent)
     sendEdit_->setAcceptRichText(false);
     intervalEdit_->setFixedWidth(60);
     frameLimitEdit_->setFixedWidth(60);
-    frameLimitEdit_->hide();
-    // mode_->addItems(QStringList::fromStdList({ tr("Text"), tr("Hex"), tr("File") }));
     mode_->addItems(QStringList{ tr("Text"), tr("Hex"), tr("File") });
-    connect(mode_, SIGNAL(currentIndexChanged(int)), this, SLOT(showModeDetail(int)));
-    connect(intervalBox_, SIGNAL(clicked(bool)), this, SLOT(ctrlSendTimer(bool)));
+    connect(mode_, &QComboBox::currentIndexChanged, this, &SendWidget::showModeDetail);
+    connect(intervalBox_, &QCheckBox::clicked, this, &SendWidget::ctrlSendTimer);
 
     setupUi();
 }
@@ -40,21 +38,17 @@ void SendWidget::setupUi()
     {
         auto cleanBtn = new QPushButton(tr("CLEAR"));
         ctrl->addWidget(cleanBtn);
-        connect(cleanBtn, SIGNAL(clicked()), sendEdit_, SLOT(clear()));
-        connect(cleanBtn, SIGNAL(clicked()), this, SLOT(resetToTextMode()));
+        connect(cleanBtn, &QPushButton::clicked, sendEdit_, &QTextEdit::clear);
+        connect(cleanBtn, &QPushButton::clicked, this, &SendWidget::resetToTextMode);
     }
 
     auto sendLayout = new QHBoxLayout;
     {
         sendLayout->addWidget(intervalBox_);
         sendLayout->addWidget(intervalEdit_);
-        auto desc = new QLabel(tr("ms send"));
-        sendLayout->addWidget(desc);
-    }
-    sendLayout->addSpacing(20);
-    {
-        // sendLayout->addWidget(new QLabel(tr("Frame Bytes")));
-        // sendLayout->addWidget(frameLimitEdit_);
+        sendLayout->addWidget(new QLabel(tr("ms send")));
+        sendLayout->addWidget(frameLimitEdit_);
+        sendLayout->addWidget(new QLabel(tr("bytes")));
     }
     sendLayout->addSpacing(20);
     /// todo
@@ -63,9 +57,9 @@ void SendWidget::setupUi()
 
     sendLayout->addStretch(1);
     {
-        auto sendBtn = new QPushButton(tr("SEND"));
-        sendLayout->addWidget(sendBtn);
-        connect(sendBtn, SIGNAL(clicked()), this, SLOT(sendData()), Qt::QueuedConnection);
+        sendButton_ = new QPushButton(tr("SEND"));
+        sendLayout->addWidget(sendButton_);
+        connect(sendButton_, &QPushButton::clicked, this, &SendWidget::sendData, Qt::QueuedConnection);
     }
 
     auto layout = new QVBoxLayout(central_);
@@ -73,25 +67,36 @@ void SendWidget::setupUi()
     layout->addLayout(sendLayout);
 }
 
-QByteArray SendWidget::prepareData() const
+QByteArray SendWidget::prepareData()
 {
-    if (auto isFileMode = mode_->currentIndex() == 2; isFileMode)
+    if (isFileMode())
     {
         QFile file(sendEdit_->toPlainText());
         if (!file.open(QFile::ReadOnly))
         {
             return {};
         }
-        /// todo
-        /// large file maybe lag/slow
-        auto bytes = file.readAll();
+        file.seek(offset_);
+        auto len = frameLimitEdit_->text().toInt();
+        len = len > 0 ? len : file.size();
+        auto bytes = file.read(len);
         file.close();
+        offset_ += len;
+        if (offset_ >= file.size())
+        {
+            offset_ = 0;
+        }
         return bytes;
     }
     else
     {
         return sendEdit_->toPlainText().toLocal8Bit();
     }
+}
+
+bool SendWidget::isFileMode() const
+{
+    return mode_->currentIndex() == 2;
 }
 
 void SendWidget::sendData()
@@ -107,38 +112,21 @@ void SendWidget::sendData()
         return;
     }
 
-    auto doSend = [task, this](auto &&block) {
-        switch (mode_->currentIndex())
-        {
-        case 0:  // text
-        case 2:  // file
-            task->send(block);
-            break;
-        case 1:  // hex
-            task->send(fromHexString(QString(block)));
-            break;
-        }
-    };
-
-    /// todo
-    int offset = 0;
-    int limit = frameLimitEdit_->text().toInt();
-    if (limit == 0)
+    switch (mode_->currentIndex())
     {
-        doSend(data);
-        return;
+    case 0:  // text
+    case 2:  // file
+        task->send(data);
+        break;
+    case 1:  // hex
+        task->send(fromHexString(QString(data)));
+        break;
     }
-    while (data.size() - offset > limit)
-    {
-        doSend(data.mid(offset, limit));
-        offset += limit;
-    }
-    doSend(data.mid(offset));
 }
 
 void SendWidget::showModeDetail(int index)
 {
-    if (index == 2)
+    if (isFileMode())
     {
         sendEdit_->setReadOnly(true);
         openChooseFileDialog();
@@ -158,6 +146,7 @@ void SendWidget::openChooseFileDialog()
         return;
     }
     sendEdit_->setText(path);
+    sendButton_->setDisabled(true);
 }
 
 void SendWidget::ctrlSendTimer(bool checked)
@@ -171,25 +160,31 @@ void SendWidget::ctrlSendTimer(bool checked)
         return;
     }
 
+    offset_ = 0;
     if (checked)
     {
         timer_ = new QTimer(this);
         timer_->setSingleShot(false);
         timer_->setInterval(ms);
         timer_->start();
-        connect(timer_, SIGNAL(timeout()), this, SLOT(sendData()));
+        connect(timer_, &QTimer::timeout, this, &SendWidget::sendData, Qt::UniqueConnection);
+        sendButton_->setDisabled(true);
         intervalEdit_->setDisabled(true);
+        frameLimitEdit_->setDisabled(true);
     }
     else if (timer_ != nullptr)
     {
         timer_->stop();
         delete timer_;
         timer_ = nullptr;
-        intervalEdit_->setDisabled(false);
+        sendButton_->setEnabled(true);
+        intervalEdit_->setEnabled(true);
+        frameLimitEdit_->setEnabled(true);
     }
 }
 
 void SendWidget::resetToTextMode()
 {
     mode_->setCurrentIndex(0);
+    sendButton_->setEnabled(true);
 }

@@ -1,4 +1,4 @@
-#include "ConfigWidget.h"
+﻿#include "ConfigWidget.h"
 #include "AppSettingsDialog.h"
 #include "CommonUi.h"
 #include "MulticastConfigWidget.h"
@@ -67,7 +67,7 @@ void ConfigWidget::setupUi()
         settingsBtn->setIconSize(QSize(22, 22));
         settingsBtn->setFixedSize(settingsBtn->iconSize());
         cornerLayout->addWidget(settingsBtn);
-        connect(settingsBtn, SIGNAL(clicked()), this, SLOT(showSettingsDialog()));
+        connect(settingsBtn, &QPushButton::clicked, this, &ConfigWidget::showSettingsDialog);
     }
     {
         auto formLayout = new QHBoxLayout(form_);
@@ -84,8 +84,8 @@ void ConfigWidget::setupUi()
         centralLayout->addWidget(start_);
     }
 
-    connect(proto_, SIGNAL(currentIndexChanged(int)), this, SLOT(showDetailWidget(int)));
-    connect(start_, SIGNAL(clicked(bool)), this, SLOT(ctrlNetworkTask(bool)));
+    connect(proto_, &QComboBox::currentIndexChanged, this, &ConfigWidget::showDetailWidget);
+    connect(start_, &QPushButton::clicked, this, &ConfigWidget::ctrlNetworkTask);
 }
 
 void ConfigWidget::startNewNetworkTask()
@@ -104,7 +104,7 @@ void ConfigWidget::startNewNetworkTask()
     auto detail = protoDetail_->currentWidget();
     auto nc = gatherConfig(detail);
     auto task = ntm->create(proto, nc);
-    connect(task, SIGNAL(workStateChanged(int)), this, SLOT(updateCtrlButtons(int)));
+    connect(task, &NetworkTask::workStateChanged, this, &ConfigWidget::updateCtrlButtons);
     Q_CHECK_PTR(task);
     ntm->start(task);
 

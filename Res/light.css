@@ -2,11 +2,7 @@
 QFrame{outline:none;}
 TitledWidget {
     background-color:#fff;
-    border: 5px solid #fff;
-    border-top-color:    qlineargradient(y0:0, y1:1,stop: 0 #ececef, stop: 1 #ffffff);
-    border-left-color:   qlineargradient(x0:0, x1:1,stop: 0 #ececef, stop: 1 #ffffff);
-    border-bottom-color: qlineargradient(y0:0, y1:1,stop: 0 #ffffff, stop: 1 #ececef);
-    border-right-color:  qlineargradient(x0:0, x1:1,stop: 0 #ffffff, stop: 1 #ececef);
+    border: 1px solid #eee;
 }
 TitledWidget #title{border:0;background-color:#f7f7f8;padding:6px 8px;}
 TitledWidget #title>QLabel {font-size:14px;font-weight:bold;}

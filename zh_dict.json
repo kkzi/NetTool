@@ -24,5 +24,22 @@
 "ok":"确定",
 "theme":"主题",
 "language":"语言",
-"settings":"设置"
+"settings":"设置",
+"invalid port %1":"无效端口%1",
+"invalid multicast ip address %1":"无效组播地址%1",
+"send multicast message to %1 failed":"发送组播消息到%1失败",
+"send %1 bytes to multicast %2":"发送%1字节到组播地址%2",
+"save file":"保存文件",
+"choose file storage path":"选择文件保存路径",
+"send file":"发送文件",
+"bytes":"字节",
+"choose file to send":"选择要发送的文件",
+"connect to tcp server %1 failed":"连接到TCP服务器%1失败",
+"connect to tcp server %1 successed":"连接到TCP服务器%1成功",
+"send message to tcp server %1 failed":"发送消息到TCP服务器%1失败",
+"send %1 bytes to tcp server %2":"发送%1字节到TCP服务器%2",
+"a tcp server listening on %1:%2 is running":"服务器%1:%2已经在运行",
+"tcp connection disconnected from %1":"从%1断开TCP连接",
+"tcp connection established from %1":"建立和%1的TCP连接",
+"udp send %1 bytes to %2":"发送%1字节到UDP %2"
 }

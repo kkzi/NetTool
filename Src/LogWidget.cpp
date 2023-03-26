@@ -1,4 +1,4 @@
-#include "LogWidget.h"
+﻿#include "LogWidget.h"
 #include <QDateTime>
 #include <QLabel>
 #include <QPushButton>
@@ -30,6 +30,6 @@ void LogWidget::setupUi()
     top->addSpacing(10);
     auto clearBtn = new QPushButton(tr("CLEAR"));
     top->addWidget(clearBtn);
-    connect(clearBtn, SIGNAL(clicked()), log_, SLOT(clear()));
-    connect(clearBtn, SIGNAL(clicked()), info_, SLOT(clear()));
+    connect(clearBtn, &QPushButton::clicked, log_, &QTextEdit::clear);
+    connect(clearBtn, &QPushButton::clicked, info_, &QLabel::clear);
 }
