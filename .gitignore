@@ -1,0 +1,13 @@
+x64
+x86
+out
+build
+enc_temp_folder
+Debug
+Release
+.vs
+.idea
+*.ilk
+*.log
+*.user
+CMakeSettings.json
