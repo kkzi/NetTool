@@ -7,7 +7,6 @@ NetworkTask::NetworkTask(NetworkConfig cfg)
 
 NetworkTask::~NetworkTask()
 {
-    stop();
 }
 
 NetworkTask &NetworkTask::on_state_changed(std::function<void(WorkState)> func)
@@ -39,13 +38,11 @@ void NetworkTask::start()
 
 void NetworkTask::stop()
 {
-    if (io_.stopped())
-    {
-        return;
-    }
     do_stop();
-    // io_.reset();
-    io_.stop();
+    if (!io_.stopped())
+    {
+        io_.stop();
+    }
     if (thread_.joinable())
     {
         thread_.join();

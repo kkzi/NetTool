@@ -13,7 +13,7 @@ public:
     ~ProtocolConfigWidget();
 
 public:
-    void update();
+    void Draw();
     void update_task_state(NetworkTask::WorkState state);
     NetworkConfig config() const;
 

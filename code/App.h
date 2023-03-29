@@ -5,7 +5,6 @@
 #include "ProtocolConfigWidget.h"
 #include "RecvWidget.h"
 #include "SendWidget.h"
-#include "ExampleAppConsole.h"
 #include <memory>
 #include <string_view>
 
@@ -20,6 +19,7 @@ public:
 private:
     void show_main_window();
     void ctrl_task(bool on);
+    void send_bytes(const std::vector<std::byte> &bytes);
     std::shared_ptr<NetworkTask> create_task() const;
 
     void on_state_changed(NetworkTask::WorkState state);
@@ -32,6 +32,5 @@ private:
     RecvWidget recv_widget_;
     SendWidget send_widget_;
     LogWidget log_widget_;
-    ExampleAppConsole console_;
     std::shared_ptr<NetworkTask> task_{ nullptr };
 };

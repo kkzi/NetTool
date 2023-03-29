@@ -107,6 +107,7 @@ private:
 /************************************************************************/
 TcpServerTask::~TcpServerTask()
 {
+    stop();
 }
 
 void TcpServerTask::do_start()
@@ -124,10 +125,13 @@ void TcpServerTask::do_start()
 
 void TcpServerTask::do_stop()
 {
-    stopped_ = true;
-    acc_->cancel();
-    acc_->close();
-    sessions_.clear();
+    if (!stopped_)
+    {
+        stopped_ = true;
+        acc_->cancel();
+        acc_->close();
+        sessions_.clear();
+    }
 }
 
 void TcpServerTask::send(const std::vector<std::byte> &data)

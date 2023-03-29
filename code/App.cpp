@@ -1,6 +1,8 @@
 #include "App.h"
-#include "SimpleLayout.h"
+#include "MulticastTask.h"
+#include "TcpClientTask.h"
 #include "TcpServerTask.h"
+#include "UdpTask.h"
 #include <hello_imgui/hello_imgui.h>
 #include <hello_imgui/widgets/logger.h>
 #include <string>
@@ -8,6 +10,7 @@
 App::App(std::string_view title, int argc, char **argv)
     : title_(title)
     , cfg_widget_(std::bind(&App::ctrl_task, this, std::placeholders::_1))
+    , send_widget_(std::bind(&App::send_bytes, this, std::placeholders::_1))
 {
 }
 
@@ -20,11 +23,10 @@ int App::run()
     params.callbacks.SetupImGuiConfig = [] {
         ImGui::GetIO().IniFilename = "";
     };
-    // params.callbacks.LoadAdditionalFonts = [] {
-    //    auto &io = ImGui::GetIO();
-    //    io.IniFilename = "";
-    //    io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/msyh.ttc", 16, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
-    //};
+    params.callbacks.LoadAdditionalFonts = [] {
+        auto &io = ImGui::GetIO();
+        io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/Calibri.ttf", 14, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+    };
     params.appWindowParams = {
         .windowTitle = title_,
         .windowGeometry = {
@@ -33,7 +35,7 @@ int App::run()
             .positionMode = HelloImGui::WindowPositionMode::MonitorCenter,
         },
     };
-    // params.imGuiWindowParams.tweakedTheme.Theme = ImGuiTheme::ImGuiTheme_WhiteIsWhite;
+    // params.imGuiWindowParams.tweakedTheme.Theme = ImGuiTheme::ImGuiTheme_SoDark_AccentYellow;
     params.imGuiWindowParams.tweakedTheme.Theme = ImGuiTheme::ImGuiTheme_MicrosoftStyle;
 
     HelloImGui::Run(params);
@@ -46,35 +48,44 @@ void App::show_main_window()
     ImGui::Dummy({ 0, 8 });
     ImGui::Indent(12);
 
-    // ImGui::PushStyleColor(ImGuiCol_Border, 0xFFFFFF);
+    // ImGui::PushStyleColor(ImGuiCol_WindowBg, 0xFFFFFF);
     // ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0);
 
     auto width = ImGui::GetWindowSize().x - 24;
-    auto height = ImGui::GetWindowHeight();
+    auto height = ImGui::GetWindowHeight() - 16;
 
     auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
     bool show_border = false;
 
-    cfg_widget_.update();
+    if (ImGui::BeginChild("##content", { width, height }))
+    {
+        cfg_widget_.Draw();
 
-    // static SimpleLayout sl;
-    // sl.Draw();
+        ImGui::SeparatorText("RECEIVE");
+        if (ImGui::BeginChild("receive_widget", { width, height * 0.4f }, show_border, flags))
+        {
+            recv_widget_.Draw();
+            ImGui::EndChild();
+        }
 
-    ImGui::BeginChild("receive_widget", { width, height * 0.4f }, show_border, flags);
-    recv_widget_.update();
-    auto n = ImGui::GetContentRegionMax().y;
-    ImGui::EndChild();
+        ImGui::SeparatorText("SEND");
+        if (ImGui::BeginChild("send_widget", { width, height * 0.24f }, show_border, flags))
+        {
+            send_widget_.Draw();
+            ImGui::EndChild();
+        }
 
-    ImGui::BeginChild("send_widget", { width, height * 0.2f }, show_border, flags);
-    send_widget_.update();
-    ImGui::EndChild();
+        ImGui::SeparatorText("LOG");
+        if (ImGui::BeginChild("log_widget", { width, 20 - ImGui::GetFrameHeightWithSpacing() }, show_border, flags))
+        {
+            log_widget_.Draw();
+            ImGui::EndChild();
+        }
 
-    ImGui::BeginChild("log_widget", { width, -ImGui::GetFrameHeight() + 10 }, show_border, flags);
-    log_widget_.update();
-    ImGui::EndChild();
-
-    // ImGui::PopStyleVar();
-    // ImGui::PopStyleColor();
+        // ImGui::PopStyleVar();
+        ImGui::EndChild();
+    }
+    // ImGui::PopStyleColor(3);
 }
 
 void App::ctrl_task(bool on)
@@ -102,6 +113,19 @@ void App::ctrl_task(bool on)
     }
 }
 
+void App::send_bytes(const std::vector<std::byte> &bytes)
+{
+    if (bytes.empty())
+    {
+        return;
+    }
+    if (task_ == nullptr)
+    {
+        return;
+    }
+    task_->send(bytes);
+}
+
 std::shared_ptr<NetworkTask> App::create_task() const
 {
     NetworkConfig cfg = cfg_widget_.config();
@@ -111,8 +135,11 @@ std::shared_ptr<NetworkTask> App::create_task() const
     case Protocol::TcpServer:
         return std::make_shared<TcpServerTask>(cfg);
     case Protocol::TcpClient:
+        return std::make_shared<TcpClientTask>(cfg);
     case Protocol::Udp:
+        return std::make_shared<UdpTask>(cfg);
     case Protocol::Multicast:
+        return std::make_shared<MulticastTask>(cfg);
     default:
         break;
     }
@@ -126,9 +153,10 @@ void App::on_state_changed(NetworkTask::WorkState state)
 
 void App::on_data_received(std::string_view from, const std::vector<std::byte> &data)
 {
+    recv_widget_.AppendBuffer(std::string((char *)data.data(), data.size()));
 }
 
 void App::on_message_received(std::string_view msg)
 {
-    log_widget_.AddLog(msg.data());
+    log_widget_.AddLog(msg);
 }

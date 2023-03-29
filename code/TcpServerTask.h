@@ -13,7 +13,7 @@ class TcpServerTask : public NetworkTask, std::enable_shared_from_this<TcpServer
 {
 public:
     using NetworkTask::NetworkTask;
-    ~TcpServerTask();
+    ~TcpServerTask() override;
 
 public:
     void do_start() override;

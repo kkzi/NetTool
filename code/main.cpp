@@ -5,7 +5,7 @@
 
 int main(int argc, char **argv)
 {
-    std::string_view name{ "net assistant" };
+    std::string_view name{ "NET ASSISTANT" };
     // init_logger(name);
 
     App app(name, argc, argv);

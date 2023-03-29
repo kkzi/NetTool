@@ -1,6 +1,8 @@
 #pragma once
 
 #include <imgui.h>
+#include <string_view>
+#include <vector>
 
 class LogWidget
 {
@@ -8,46 +10,30 @@ class LogWidget
 public:
     void Clear()
     {
-        Buf.clear();
-        LineOffsets.clear();
-        LineOffsets.push_back(0);
+        logs_.clear();
     }
 
-    void AddLog(const char *msg)
+    void AddLog(std::string_view msg)
     {
-        int old_size = Buf.size();
-        Buf.append(msg);
-        Buf.append("\n");
-        for (int new_size = Buf.size(); old_size < new_size; old_size++)
+        logs_.emplace_back(msg);
+        while (logs_.size() > 256)
         {
-            if (Buf[old_size] == '\n') LineOffsets.push_back(old_size + 1);
+            logs_.erase(logs_.begin());
         }
     }
 
-    void update()
+    void Draw()
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
-        const char *buf = Buf.begin();
-        const char *buf_end = Buf.end();
-        ImGuiListClipper clipper;
-        clipper.Begin(LineOffsets.Size);
-        while (clipper.Step())
+        //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 0));
+        for (auto &&it : logs_)
         {
-            for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++)
-            {
-                const char *line_start = buf + LineOffsets[line_no];
-                const char *line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
-                ImGui::TextUnformatted(line_start, line_end);
-            }
+            ImGui::TextUnformatted(it.c_str());
         }
-        clipper.End();
-        ImGui::PopStyleVar();
-
-        if (AutoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) ImGui::SetScrollHereY(1.0f);
+        //ImGui::PopStyleVar();
+        if (auto_scroll_ && ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) ImGui::SetScrollHereY(1.0f);
     }
 
 private:
-    ImGuiTextBuffer Buf;
-    ImVector<int> LineOffsets;
-    bool AutoScroll{ true };
+    std::vector<std::string> logs_;
+    bool auto_scroll_{ true };
 };

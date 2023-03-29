@@ -27,5 +27,5 @@ find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 aux_source_directory(code SRCS)
-hello_imgui_add_app(${PROJECT_NAME} ${SRCS} dpi.manifest)
+hello_imgui_add_app(${PROJECT_NAME} ${SRCS} res/dpi.manifest res/nettool.rc)
 

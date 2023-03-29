@@ -45,13 +45,11 @@ ProtocolConfigWidget::~ProtocolConfigWidget()
     }
 }
 
-void ProtocolConfigWidget::update()
+void ProtocolConfigWidget::Draw()
 {
     constexpr static int WIDTH_PROTO = 120;
     constexpr static int WIDTH_IP = 140;
     constexpr static int WIDTH_PORT = 64;
-
-    ImGui::BeginChild("##protocol_config_widget", { 0, 40 }, false);
 
     ImGui::AlignTextToFramePadding();
     ImGui::Text("Protocol");
@@ -115,8 +113,6 @@ void ProtocolConfigWidget::update()
         callback_(start_toggled_);
     }
     ImGui::EndDisabled();
-
-    ImGui::EndChild();
 }
 
 void ProtocolConfigWidget::update_task_state(NetworkTask::WorkState state)
