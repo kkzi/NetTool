@@ -3,11 +3,11 @@
 #include "TcpClientTask.h"
 #include "TcpServerTask.h"
 #include "UdpTask.h"
-#include <hello_imgui/hello_imgui.h>
-#include <hello_imgui/widgets/logger.h>
+#include "use_imgui_dx12.hpp"
+#include <ranges>
 #include <string>
 
-App::App(std::string_view title, int argc, char **argv)
+App::App(std::string_view title)
     : title_(title)
     , cfg_widget_(std::bind(&App::ctrl_task, this, std::placeholders::_1))
     , send_widget_(std::bind(&App::send_bytes, this, std::placeholders::_1))
@@ -16,76 +16,42 @@ App::App(std::string_view title, int argc, char **argv)
 
 int App::run()
 {
-    HelloImGui::RunnerParams params;
-    params.callbacks.ShowGui = [this] {
+    ImGuiDx12::RunOptions opts;
+    opts.Title.clear();
+    std::ranges::copy(title_, std::back_inserter(opts.Title));
+
+    ImGuiDx12::Run(opts, [&] {
         show_main_window();
-    };
-    params.callbacks.SetupImGuiConfig = [] {
-        ImGui::GetIO().IniFilename = "";
-    };
-    params.callbacks.LoadAdditionalFonts = [] {
-        auto &io = ImGui::GetIO();
-        io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/Calibri.ttf", 14, nullptr, io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
-    };
-    params.appWindowParams = {
-        .windowTitle = title_,
-        .windowGeometry = {
-            .size = {960, 640},
-            .sizeAuto = false,
-            .positionMode = HelloImGui::WindowPositionMode::MonitorCenter,
-        },
-    };
-    // params.imGuiWindowParams.tweakedTheme.Theme = ImGuiTheme::ImGuiTheme_SoDark_AccentYellow;
-    params.imGuiWindowParams.tweakedTheme.Theme = ImGuiTheme::ImGuiTheme_MicrosoftStyle;
-
-    HelloImGui::Run(params);
-
+    });
     return EXIT_SUCCESS;
 }
 
 void App::show_main_window()
 {
-    ImGui::Dummy({ 0, 8 });
-    ImGui::Indent(12);
+    cfg_widget_.Draw();
 
-    // ImGui::PushStyleColor(ImGuiCol_WindowBg, 0xFFFFFF);
-    // ImGui::PushStyleVar(ImGuiStyleVar_ChildBorderSize, 0);
-
-    auto width = ImGui::GetWindowSize().x - 24;
-    auto height = ImGui::GetWindowHeight() - 16;
-
-    auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+    auto size = ImGui::GetWindowSize();
     bool show_border = false;
-
-    if (ImGui::BeginChild("##content", { width, height }))
+    ImGui::SeparatorText("RECEIVE");
+    if (ImGui::BeginChild("receive_widget", { size.x, size.y * 0.4f }, show_border))
     {
-        cfg_widget_.Draw();
-
-        ImGui::SeparatorText("RECEIVE");
-        if (ImGui::BeginChild("receive_widget", { width, height * 0.4f }, show_border, flags))
-        {
-            recv_widget_.Draw();
-            ImGui::EndChild();
-        }
-
-        ImGui::SeparatorText("SEND");
-        if (ImGui::BeginChild("send_widget", { width, height * 0.24f }, show_border, flags))
-        {
-            send_widget_.Draw();
-            ImGui::EndChild();
-        }
-
-        ImGui::SeparatorText("LOG");
-        if (ImGui::BeginChild("log_widget", { width, 20 - ImGui::GetFrameHeightWithSpacing() }, show_border, flags))
-        {
-            log_widget_.Draw();
-            ImGui::EndChild();
-        }
-
-        // ImGui::PopStyleVar();
+        recv_widget_.Draw();
         ImGui::EndChild();
     }
-    // ImGui::PopStyleColor(3);
+
+    ImGui::SeparatorText("SEND");
+    if (ImGui::BeginChild("send_widget", { size.x, size.y * 0.24f }, show_border))
+    {
+        send_widget_.Draw();
+        ImGui::EndChild();
+    }
+
+    ImGui::SeparatorText("LOG");
+    if (ImGui::BeginChild("log_widget", { size.x, 0 }, show_border))
+    {
+        log_widget_.Draw();
+        ImGui::EndChild();
+    }
 }
 
 void App::ctrl_task(bool on)

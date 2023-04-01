@@ -12,20 +12,21 @@ if (MSVC)
 endif (MSVC)
 
 
-add_subdirectory(libs/hello_imgui)
-include_directories(
-    libs/hello_imgui/src
-    ${HELLOIMGUI_IMGUI_SOURCE_DIR}
-)
-list(APPEND CMAKE_MODULE_PATH ${HELLOIMGUI_CMAKE_PATH})
-include(hello_imgui_add_app)
-
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 set(BOOST_ROOT $ENV{BOOST-LATEST})
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
+include_directories(libs/imgui libs/imgui/backends)
+set(IMGUI_DX12_SRCS 
+    libs/imgui/imgui.cpp
+    libs/imgui/imgui_widgets.cpp
+    libs/imgui/imgui_draw.cpp
+    libs/imgui/imgui_tables.cpp
+    libs/imgui/backends/imgui_impl_win32.cpp
+    libs/imgui/backends/imgui_impl_dx12.cpp
+)
 aux_source_directory(code SRCS)
-hello_imgui_add_app(${PROJECT_NAME} ${SRCS} res/dpi.manifest res/nettool.rc)
+add_executable(${PROJECT_NAME} WIN32 ${IMGUI_DX12_SRCS} ${SRCS} res/dpi.manifest res/nettool.rc)
 

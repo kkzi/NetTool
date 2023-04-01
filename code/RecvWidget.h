@@ -1,6 +1,5 @@
 #pragma once
 
-#include "TextEditor.h"
 #include <imgui.h>
 #include <ranges>
 #include <sstream>
@@ -20,12 +19,14 @@ public:
             buffer_.clear();
         }
 
-        auto flags = ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_AutoSelectAll;
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, { .98f, .98f, .98f, 1 });
+        ImGui::BeginChild("receive_edit", { -16, -8 }, true, 0);
+
         switch (mode_)
         {
         case 0: {
-            editor_.SetText(buffer_);
-            ImGui::InputTextMultiline("##recv_editor", buffer_.data(), buffer_.size() + 1, ImGui::GetContentRegionAvail(), flags);
+            ImGui::TextWrapped(buffer_.c_str());
             break;
         }
         case 1: {
@@ -33,17 +34,16 @@ public:
             std::ranges::for_each(buffer_, [&ss](auto &&c) {
                 ss << std::format("{:02X} ", uint16_t(c));
             });
-
             auto text = ss.str();
-            // auto draw_list = ImGui::GetWindowDrawList();
-            // draw_list->AddText(ImGui::GetFont(), ImGui::GetFontSize(), ImVec2{0, 0}, ImU32(0), text.data(), text.data() + text.size(), 640);
-            ImGui::InputTextMultiline("##recv_editor", text.data(), text.size(), ImGui::GetContentRegionAvail(), flags);
-            // ImGui::TextWrapped(text.c_str());
+            ImGui::TextWrapped(text.c_str());
             break;
         }
         default:
             break;
         }
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
     }
 
     void AppendBuffer(const std::string &data)
@@ -59,5 +59,4 @@ public:
 private:
     int mode_{ 0 };
     std::string buffer_;
-    TextEditor editor_;
 };

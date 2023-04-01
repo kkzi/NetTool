@@ -1,13 +1,10 @@
 #include "App.h"
-#include <hello_imgui/hello_imgui.h>
+#include <imgui.h>
 #include <iostream>
-//#include <simple/use_spdlog.hpp>
 
-int main(int argc, char **argv)
+// int main(int argc, char **argv)
+int WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd)
 {
-    std::string_view name{ "NET ASSISTANT" };
-    // init_logger(name);
-
-    App app(name, argc, argv);
+    App app("NET ASSISTANT");
     return app.run();
 }

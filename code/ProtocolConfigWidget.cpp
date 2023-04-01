@@ -1,7 +1,7 @@
 #include "ProtocolConfigWidget.h"
 #include "NetworkConfig.h"
 #include <boost/asio.hpp>
-#include <hello_imgui/hello_imgui.h>
+#include <imgui.h>
 #include <ranges>
 
 static std::vector<const char *> get_local_ips()

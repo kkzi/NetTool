@@ -11,7 +11,7 @@
 class App
 {
 public:
-    App(std::string_view title, int argc, char **argv);
+    App(std::string_view title);
 
 public:
     int run();

@@ -24,13 +24,20 @@ public:
 
     void Draw()
     {
-        //ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, { 0.95f, 0.95f, 0.95f, 1.00f });
+        ImGui::BeginChild("log edit", { -16, -8 }, true, 0);
+        // ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 0));
         for (auto &&it : logs_)
         {
             ImGui::TextUnformatted(it.c_str());
         }
-        //ImGui::PopStyleVar();
+        // ImGui::PopStyleVar();
         if (auto_scroll_ && ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) ImGui::SetScrollHereY(1.0f);
+
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
     }
 
 private:

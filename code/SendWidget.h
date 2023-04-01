@@ -31,7 +31,13 @@ public:
             send_(std::move(bytes));
         }
 
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1);
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, { .98f, .98f, .98f, 1 });
+        ImGui::BeginChild("receive_edit", { -16, -8 }, true, 0);
         ImGui::InputTextMultiline("##send_editor", buffer_, IM_ARRAYSIZE(buffer_), ImGui::GetContentRegionAvail());
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar();
     }
 
 private:
