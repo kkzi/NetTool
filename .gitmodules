@@ -1,3 +1,0 @@
-[submodule "libs/hello_imgui"]
-	path = libs/hello_imgui
-	url = https://github.com/pthom/hello_imgui.git
