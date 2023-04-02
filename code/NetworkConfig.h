@@ -6,7 +6,8 @@ enum class Protocol : int
 {
     TcpServer,
     TcpClient,
-    Udp,
+    UdpReceiver,
+    UdpSender,
     Multicast,
 };
 

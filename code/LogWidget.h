@@ -1,5 +1,7 @@
 #pragma once
 
+#include <chrono>
+#include <format>
 #include <imgui.h>
 #include <string_view>
 #include <vector>
@@ -15,7 +17,7 @@ public:
 
     void AddLog(std::string_view msg)
     {
-        logs_.emplace_back(msg);
+        logs_.emplace_back(std::format("{}  {}", std::chrono::system_clock::now(), msg));
         while (logs_.size() > 256)
         {
             logs_.erase(logs_.begin());

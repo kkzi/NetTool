@@ -1,6 +1,7 @@
 #include "ProtocolConfigWidget.h"
 #include "NetworkConfig.h"
 #include <boost/asio.hpp>
+#include <cstdlib>
 #include <imgui.h>
 #include <ranges>
 
@@ -32,7 +33,7 @@ static std::vector<const char *> get_local_ips()
 ProtocolConfigWidget::ProtocolConfigWidget(std::function<void(bool)> callback)
     : callback_(std::move(callback))
 {
-    protocols_ = { "TCP Server", "TCP Client", "UDP", "UDP Multicast" };
+    protocols_ = { "TCP Server", "TCP Client", "UDP Receiver", "UDP Sender", "UDP Multicast" };
     local_ips_ = get_local_ips();
     local_ips_.insert(local_ips_.begin(), new char[]{ "127.0.0.1\0" });
 }
@@ -45,66 +46,88 @@ ProtocolConfigWidget::~ProtocolConfigWidget()
     }
 }
 
+void ProtocolConfigWidget::Setup(const NetworkConfig &cfg)
+{
+    protocol_ = (int)cfg.protocol;
+    local_ip_ = (int)std::distance(local_ips_.begin(), std::ranges::find(local_ips_, cfg.local_ip));
+    local_ip_ = std::max(local_ip_, 0);
+    std::ranges::copy(cfg.remote_ip, remote_ip_);
+    std::to_chars(local_port_, local_port_ + IM_ARRAYSIZE(local_port_), cfg.local_port);
+    std::to_chars(remote_port_, remote_port_ + IM_ARRAYSIZE(remote_port_), cfg.remote_port);
+}
+
 void ProtocolConfigWidget::Draw()
 {
     constexpr static int WIDTH_PROTO = 120;
     constexpr static int WIDTH_IP = 140;
     constexpr static int WIDTH_PORT = 64;
 
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("Protocol");
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(WIDTH_PROTO);
-    ImGui::Combo("##protocol", &protocol_, protocols_.data(), (int)protocols_.size());
-    ImGui::PopItemWidth();
-
-    ImGui::SameLine();
-    ImGui::Text("Local IP");
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(WIDTH_IP);
-    ImGui::Combo("##local_ip", &local_ip_, local_ips_.data(), (int)local_ips_.size());
-    ImGui::PopItemWidth();
-
-    if (protocol_ == (int)Protocol::Multicast)
+    // editable area
+    ImGui::BeginDisabled(start_toggled_);
     {
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("Protocol");
+
         ImGui::SameLine();
-        ImGui::Text("Multicast IP");
-        ImGui::SameLine();
-        ImGui::PushItemWidth(WIDTH_IP);
-        ImGui::InputText("##multicast_ip", remote_ip_, IM_ARRAYSIZE(remote_ip_));
+        ImGui::PushItemWidth(WIDTH_PROTO);
+        ImGui::Combo("##protocol", &protocol_, protocols_.data(), (int)protocols_.size());
         ImGui::PopItemWidth();
-    }
 
-    ImGui::SameLine();
-    ImGui::Text("Port");
-
-    ImGui::PushItemWidth(WIDTH_PORT);
-    ImGui::SameLine();
-    ImGui::InputText("##local_port", local_port_, IM_ARRAYSIZE(local_port_));
-    ImGui::PopItemWidth();
-
-    if (protocol_ == (int)Protocol::TcpClient || protocol_ == (int)Protocol::Udp)
-    {
         ImGui::SameLine();
-        ImGui::Text("Remote IP");
+        ImGui::Text("Local IP");
 
         ImGui::SameLine();
         ImGui::PushItemWidth(WIDTH_IP);
-        ImGui::InputText("##remote_ip", remote_ip_, IM_ARRAYSIZE(remote_ip_));
+        ImGui::Combo("##local_ip", &local_ip_, local_ips_.data(), (int)local_ips_.size());
         ImGui::PopItemWidth();
+
+        if (protocol_ == (int)Protocol::Multicast)
+        {
+            ImGui::SameLine();
+            ImGui::Text("Multicast IP");
+            ImGui::SameLine();
+            ImGui::PushItemWidth(WIDTH_IP);
+            ImGui::InputText("##multicast_ip", remote_ip_, IM_ARRAYSIZE(remote_ip_));
+            ImGui::PopItemWidth();
+        }
 
         ImGui::SameLine();
         ImGui::Text("Port");
 
         ImGui::PushItemWidth(WIDTH_PORT);
         ImGui::SameLine();
-        ImGui::InputText("##remote_port", remote_port_, IM_ARRAYSIZE(remote_port_));
+        ImGui::InputText("##local_port", local_port_, IM_ARRAYSIZE(local_port_));
         ImGui::PopItemWidth();
-    }
-    ImGui::SameLine(0, 20);
 
+        if (protocol_ == (int)Protocol::TcpClient || protocol_ == (int)Protocol::UdpSender)
+        {
+            ImGui::SameLine();
+            ImGui::Text("Remote IP");
+
+            ImGui::SameLine();
+            ImGui::PushItemWidth(WIDTH_IP);
+            ImGui::InputText("##remote_ip", remote_ip_, IM_ARRAYSIZE(remote_ip_));
+            ImGui::PopItemWidth();
+
+            ImGui::SameLine();
+            ImGui::Text("Port");
+
+            ImGui::PushItemWidth(WIDTH_PORT);
+            ImGui::SameLine();
+            ImGui::InputText("##remote_port", remote_port_, IM_ARRAYSIZE(remote_port_));
+            ImGui::PopItemWidth();
+        }
+        ImGui::SameLine(0, 20);
+    }
+    ImGui::EndDisabled();
+
+    bool is_running = start_toggled_;
+    if (is_running)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Button, 0xA5151599);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, 0xA51515FF);
+        ImGui::PushStyleColor(ImGuiCol_Text, 0xFFFFFFFF);
+    }
     ImGui::BeginDisabled(start_busy_);
     if (ImGui::Button(!start_busy_ && start_toggled_ ? "STOP" : "START", { 64, 0 }))
     {
@@ -113,15 +136,19 @@ void ProtocolConfigWidget::Draw()
         callback_(start_toggled_);
     }
     ImGui::EndDisabled();
+    if (is_running)
+    {
+        ImGui::PopStyleColor(3);
+    }
 }
 
-void ProtocolConfigWidget::update_task_state(NetworkTask::WorkState state)
+void ProtocolConfigWidget::UpdateTaskStatus(NetworkTask::WorkState state)
 {
     start_busy_ = false;
     start_toggled_ = state == NetworkTask::WorkState::OK;
 }
 
-NetworkConfig ProtocolConfigWidget::config() const
+NetworkConfig ProtocolConfigWidget::Config() const
 {
     return NetworkConfig{
         .protocol = Protocol(protocol_),

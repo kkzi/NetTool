@@ -13,9 +13,10 @@ public:
     ~ProtocolConfigWidget();
 
 public:
+    void Setup(const NetworkConfig &);
     void Draw();
-    void update_task_state(NetworkTask::WorkState state);
-    NetworkConfig config() const;
+    void UpdateTaskStatus(NetworkTask::WorkState state);
+    NetworkConfig Config() const;
 
 private:
     std::vector<const char *> protocols_;
