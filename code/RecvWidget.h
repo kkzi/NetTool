@@ -30,41 +30,80 @@ public:
         {
             buffer_.clear();
         }
+        ImGui::SameLine(0, 20);
+        if (ImGui::SmallButton("COPY"))
+        {
+            ImGui::LogToClipboard();
+            auto text = get_text_string();
+            ImGui::LogText((char *)text.c_str());
+            ImGui::LogFinish();
+        }
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 1);
         ImGui::PushStyleColor(ImGuiCol_ChildBg, { .98f, .98f, .98f, 1 });
         ImGui::BeginChild("receive_edit", { -16, -8 }, true, 0);
 
-        if (!buffer_.empty())
-        {
-            switch (mode_)
-            {
-            case 0: {
-                ImGui::TextWrapped((char *)buffer_.data());
-                break;
-            }
-            case 1: {
-                std::stringstream ss;
-                std::ranges::for_each(buffer_, [&ss](auto &&c) {
-                    ss << std::format("{:02X} ", uint16_t(c));
-                });
-                auto text = ss.str();
+        draw_text();
 
-                ImGui::PushFont(mono_);
-                ImGui::TextWrapped(text.c_str());
-                ImGui::PopFont();
-                break;
-            }
-            default:
-                break;
-            }
-        }
         ImGui::EndChild();
         ImGui::PopStyleColor();
         ImGui::PopStyleVar();
     }
 
-    static std::string GbkToUtf8(const std::string &input)
+    void AppendBuffer(const std::vector<std::byte> &data)
+    {
+        static constexpr size_t BUFFER_LIMIT = 1024;
+        std::copy((char *)data.data(), (char *)data.data() + data.size(), std::back_inserter(buffer_));
+        if (buffer_.size() > BUFFER_LIMIT)
+        {
+            buffer_.erase(0, buffer_.size() - BUFFER_LIMIT);
+        }
+    }
+
+private:
+    std::string get_text_string()
+    {
+        if (buffer_.empty())
+        {
+            return {};
+        }
+        switch (mode_)
+        {
+        case 0: {
+            return buffer_;
+        }
+        case 1: {
+            std::stringstream ss;
+            std::ranges::for_each(buffer_, [&ss](auto &&c) {
+                ss << std::format("{:02X} ", uint8_t(c));
+            });
+            return ss.str();
+        }
+        default:
+            return {};
+        }
+    }
+
+    void draw_text()
+    {
+        auto text = get_text_string();
+        if (text.empty())
+        {
+            return;
+        }
+        auto is_hex = mode_ == 1;
+        if (is_hex)
+        {
+            ImGui::PushFont(mono_);
+        }
+        ImGui::TextWrapped(text.c_str());
+        if (is_hex)
+        {
+            ImGui::PopFont();
+        }
+    }
+
+    static std::string gbk2utf8(const std::string &input)
     {
         int len = MultiByteToWideChar(CP_ACP, 0, input.c_str(), -1, NULL, 0);
         std::wstring wstr(len, '0');
@@ -76,19 +115,8 @@ public:
         return output;
     }
 
-    void AppendBuffer(const std::vector<std::byte> &data)
-    {
-        static constexpr size_t BUFFER_LIMIT = 1024;
-        // auto u8text = boost::locale::conv::to_utf<char>((char *)data.data(), std::string("gb2312"));
-        std::copy((char *)data.data(), (char *)data.data() + data.size(), std::back_inserter(buffer_));
-        if (buffer_.size() > BUFFER_LIMIT)
-        {
-            buffer_.erase(0, buffer_.size() - BUFFER_LIMIT);
-        }
-    }
-
 private:
     int mode_{ 0 };
-    std::u8string buffer_;
+    std::string buffer_;
     ImFont *mono_{ nullptr };
 };

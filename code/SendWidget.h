@@ -33,7 +33,7 @@ public:
         ImGui::SameLine(0, 20);
         if (ImGui::SmallButton("SEND"))
         {
-            auto bytes = ReadBytes();
+            auto bytes = read_bytes();
             send_(std::move(bytes));
         }
 
@@ -58,7 +58,7 @@ public:
     }
 
 private:
-    std::vector<std::byte> ReadBytes()
+    std::vector<std::byte> read_bytes()
     {
         std::vector<std::byte> bytes;
         switch (mode_)
