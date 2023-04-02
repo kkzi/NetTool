@@ -1,4 +1,5 @@
 #include "App.h"
+#include "../res/resource.h"
 #include "MulticastTask.h"
 #include "NetworkConfigIO.h"
 #include "TcpClientTask.h"
@@ -21,6 +22,7 @@ int App::run()
     opts.Font->Path = "C:/Windows/Fonts/msyh.ttc";
     opts.Font->Range = ImGuiDx12::Font::Chinese;
     opts.Title.clear();
+    opts.Icon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON2));
     std::ranges::copy(title_, std::back_inserter(opts.Title));
 
     opts.Setup = [this] {
