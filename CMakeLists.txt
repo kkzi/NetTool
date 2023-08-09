@@ -15,19 +15,22 @@ string(REGEX REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}
 string(REGEX REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
 
+#find_package(zstd CONFIG REQUIRED)
+
 #set(QT_DIR C:/Qt/4.8.7)
-set(QT_DIR C:/Qt/6.4.2)
-set(QT_QMAKE_EXECUTABLE ${QT_DIR}/bin/qmake.exe)
+set(QT_DIR C:/Local/Qt/6.5.2)
+#set(QT_QMAKE_EXECUTABLE ${QT_DIR}/bin/qmake.exe)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
-set(CMAKE_PREFIX_PATH ${QT_DIR}/lib/cmake)
-find_package(Qt6 REQUIRED Core Gui Widgets Network) 
+set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};${QT_DIR}/lib/cmake")
+find_package(Qt6 REQUIRED Gui Widgets Network) 
 
-#set(BOOST_DIR C:/Local/boost_1_81_0)
-set(BOOST_DIR $ENV{BOOST-LATEST})
+set(BOOST_DIR $ENV{BOOST})
+set(Boost_USE_STATIC_LIB ON)
+add_definitions(-DBOOST_DATE_TIME_NO_LIB)
 
 include_directories(Core)
 include_directories(${BOOST_DIR} ${QT_DIR}/include ${QT_DIR}/include/QtCore ${QT_DIR}/include/QtGui ${QT_DIR}/include/QtWidgets)

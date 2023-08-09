@@ -1,6 +1,6 @@
 #include "App.h"
-#include "NetworkConfig.h"
 #include <QMap>
+#include "NetworkConfig.h"
 #include <QSettings>
 #include <QTranslator>
 
